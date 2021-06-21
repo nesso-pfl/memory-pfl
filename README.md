@@ -1,34 +1,32 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# memory-pfl
+## 概要
+#### 背景課題
+- 何か習得しても半年も経てば忘れる
+- 技術の説明を求められてもパッと出てこない
+  - 採用面接、技術者同士の会話において、技術を説明できる程度に把握することは極めて重要
 
-## Getting Started
+#### 解決手段としてのサイト
+- 技術の説明を書き留める
+- 技術同士の比較がある
+- 技術を利用する上での注意が書かれる
+- 記憶を長期的なものにするためのクイズが生成できる
 
-First, run the development server:
+#### サイトの利用対象者
+- core: 自分
+  - あれなんだっけをカジュアルに思いだす
+  - これ絶対忘れそうだなを忘れないように書き留める
+    - 忘れても良いようにする
+- mass: 技術者
+  - これなんだっけをカジュアルに理解する
+  - 但しこのサイトでは内容の正しさは保証せず、利用は自己責任とする
+  - 念のため、書いてあるものについて事実の裏付けをする参考リンクは提供する
 
-```bash
-npm run dev
-# or
-yarn dev
-```
+## サイトマップ
+| 画面名 | パス |
+| --- | --- |
+| 技術検索ページ | /?search=<default-search-word> |
+| 技術説明ページ | /description/<technorogy-name> |
+| クイズページ | /quiz?genre=<genre> |
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
-
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
-
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/import?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+## 画面仕様
+WIP
