@@ -1,0 +1,14 @@
+.header {
+  align-items: center;
+  display: flex;
+}
+
+.topLink {
+  color: black;
+  font-size: 18px;
+  text-decoration: none;
+
+  &:hover {
+    color: lightgray;
+  }
+}

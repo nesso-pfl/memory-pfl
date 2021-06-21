@@ -1,0 +1,12 @@
+.container {
+  margin: 0 auto;
+}
+
+.header {
+  height: 42px;
+}
+
+.main {
+  height: calc(100vh - 42px);
+  overflow-y: auto;
+}
