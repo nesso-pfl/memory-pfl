@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import * as mdxs from "../description/_index";
 import summaries from "../../generated/knowledge-summary.json";
 
-type Knowledge = {
+export type Knowledge = {
   title: string;
   link: string;
   summaries: string[];
