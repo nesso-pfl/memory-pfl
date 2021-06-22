@@ -7,6 +7,7 @@ import remarkParse from "remark-parse";
 type AST = Node & {
   depth?: number;
   children?: AST[];
+  value?: string;
 };
 
 const blogsPath = "./pages/description";
@@ -20,7 +21,7 @@ const getSummaries = function (markdown: string) {
     (child) => child.type === "heading" && child.depth === 1
   );
   if (maybeTitleIndex === -1) throw new Error("Title not found");
-  const title = ast.children[maybeTitleIndex].children![0].value as string;
+  const title = ast.children[maybeTitleIndex].children![0].value;
 
   // Find summaries' index
   const maybeSummaryIndex = ast.children.findIndex(
@@ -31,7 +32,7 @@ const getSummaries = function (markdown: string) {
     throw new Error("Summary list must be after summary title");
 
   const summaries = ast.children[maybeSummaryIndex + 1].children?.map(
-    (child) => child.children![0].children![0].value as string
+    (child) => child.children![0].children![0].value
   );
 
   return { title, summaries } as const;
