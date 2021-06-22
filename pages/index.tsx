@@ -1,4 +1,6 @@
 import React, { useCallback, useState } from "react";
+import styles from "./index.module.scss";
+import Link from "next/link";
 import { Layout } from "../components";
 import { useListKnowledgesResponse } from "../services/api";
 
@@ -13,21 +15,32 @@ export default function Search() {
 
   return (
     <Layout>
-      <form>
-        <input value={keyword} onChange={onChange} />
+      <form className={styles.inputForm}>
+        <input
+          className={styles.searchInput}
+          value={keyword}
+          placeholder="Search"
+          onChange={onChange}
+        />
       </form>
-      <div>
+      <ul className={styles.result}>
         {data?.map((knowledge) => (
-          <div key={knowledge.title}>
-            <h3>{knowledge.title}</h3>
-            <ul>
-              {knowledge.summaries.map((summary) => (
-                <li key={summary}>{summary}</li>
-              ))}
-            </ul>
-          </div>
+          <Link
+            key={knowledge.title}
+            href={`description/${knowledge.link}`}
+            passHref
+          >
+            <li className={styles.resultItem} key={knowledge.title}>
+              <h3>{knowledge.title}</h3>
+              <ul>
+                {knowledge.summaries.map((summary) => (
+                  <li key={summary}>{summary}</li>
+                ))}
+              </ul>
+            </li>
+          </Link>
         ))}
-      </div>
+      </ul>
     </Layout>
   );
 }

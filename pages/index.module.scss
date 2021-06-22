@@ -1,0 +1,32 @@
+.inputForm {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.searchInput {
+  font-size: 24px;
+  height: 36px;
+  padding: 0 6px;
+  margin: 16px 0;
+  width: 50vw;
+}
+
+.result {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.resultItem {
+  border-radius: 4px;
+  width: 50vw;
+
+  &:hover {
+    background: lightgray;
+  }
+
+  &:not(:first-child) {
+    border-top: 1px solid lightgray;
+  }
+}
