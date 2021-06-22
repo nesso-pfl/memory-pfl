@@ -10,7 +10,7 @@ export const Tags: React.VFC<Props> = ({ tags }) => {
     <ul>
       {tags.map((tag) => (
         <li key={tag}>
-          <Link href={`/memory/${tag}`}>{tag}</Link>
+          <Link href={`/?keyword=${tag}`}>{tag}</Link>
         </li>
       ))}
     </ul>
