@@ -1,7 +1,11 @@
-{
-  "CSS": [
-    "Cascading Style Sheets の略",
-    "スタイルシート言語に分類される",
-    "Web ページのスタイルを記述する"
-  ]
-}
+[
+  {
+    "link": "css",
+    "title": "CSS",
+    "summaries": [
+      "Cascading Style Sheets の略",
+      "スタイルシート言語に分類される",
+      "Web ページのスタイルを記述する"
+    ]
+  }
+]

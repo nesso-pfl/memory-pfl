@@ -34,23 +34,21 @@ const getSummaries = function (markdown: string) {
     (child) => child.children![0].children![0].value as string
   );
 
-  return [title, summaries] as const;
+  return { title, summaries } as const;
 };
 
 fs.readdir(blogsPath, (err, files) => {
   if (err) throw err;
 
-  const summaries = Object.fromEntries(
-    files
-      .filter((file) => file.endsWith(".mdx"))
-      .map((file) => {
-        const content = fs.readFileSync(path.join(blogsPath, file), "utf-8");
-        return {
-          link: file.replace(".mdx", ""),
-          ...getSummaries(content),
-        };
-      })
-  );
+  const summaries = files
+    .filter((file) => file.endsWith(".mdx"))
+    .map((file) => {
+      const content = fs.readFileSync(path.join(blogsPath, file), "utf-8");
+      return {
+        link: file.replace(".mdx", ""),
+        ...getSummaries(content),
+      };
+    });
 
   fs.writeFile(
     "./generated/knowledge-summary.json",
