@@ -1,20 +1,10 @@
 import React, { useCallback, useState } from "react";
-import useSWR from "swr";
 import { Layout } from "../components";
-import type { Knowledge } from "./api/list-knowledges";
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
-const useListKnowledges = (keyword: string) => {
-  return useSWR<Knowledge[]>(
-    `/api/list-knowledges?keyword=${keyword}`,
-    fetcher
-  );
-};
+import { useListKnowledgesResponse } from "../services/api";
 
 export default function Search() {
   const [keyword, setKeyword] = useState("");
-  const { data } = useListKnowledges(keyword);
+  const { data } = useListKnowledgesResponse(keyword);
 
   const onChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => setKeyword(e.target.value),
