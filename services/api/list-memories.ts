@@ -1,4 +1,5 @@
 import { useResponse } from "./useResponse";
+import { queryParamToString } from "../router";
 import * as mdxs from "../../pages/memory/_index";
 import summaries from "../../generated/memory-summaries.json";
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -11,14 +12,11 @@ type Memory = {
 
 type Response = Memory[];
 
-const castString = (queryParam: string | string[]) =>
-  typeof queryParam === "string" ? queryParam : queryParam[0];
-
 export function listMemories(
   { query }: NextApiRequest,
   res: NextApiResponse<Response>
 ) {
-  const keyword = castString(query.keyword).toLowerCase();
+  const keyword = queryParamToString(query.keyword).toLowerCase();
   const searchResult = Object.values(mdxs)
     .filter(
       (mdx) =>

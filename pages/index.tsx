@@ -1,11 +1,16 @@
 import React, { useCallback, useState } from "react";
 import styles from "./index.module.scss";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { Layout } from "../components";
 import { useListMemoriesResponse } from "../services/api";
+import { queryParamToString } from "../services/router";
 
-export default function Search() {
-  const [keyword, setKeyword] = useState("");
+const Search: React.VFC = () => {
+  const { query } = useRouter();
+  const [keyword, setKeyword] = useState<string>(() =>
+    queryParamToString(query.keyword ?? "")
+  );
   const { data } = useListMemoriesResponse(keyword);
 
   const onChange = useCallback(
@@ -39,4 +44,6 @@ export default function Search() {
       </ul>
     </Layout>
   );
-}
+};
+
+export default Search;
