@@ -11,7 +11,6 @@ export default function Search() {
     []
   );
 
-  console.log(data);
   return (
     <Layout>
       <form>
