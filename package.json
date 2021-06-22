@@ -7,7 +7,7 @@
     "build": "yarn gen && next build",
     "start": "yarn gen && next start",
     "lint": "next lint",
-    "gen": "ts-node scripts/gen-knowledge-summaries.ts"
+    "gen": "ts-node scripts/gen-memory-summaries.ts"
   },
   "dependencies": {
     "next": "^11.0.0",

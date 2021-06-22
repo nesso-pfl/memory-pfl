@@ -2,11 +2,11 @@ import React, { useCallback, useState } from "react";
 import styles from "./index.module.scss";
 import Link from "next/link";
 import { Layout } from "../components";
-import { useListKnowledgesResponse } from "../services/api";
+import { useListMemoriesResponse } from "../services/api";
 
 export default function Search() {
   const [keyword, setKeyword] = useState("");
-  const { data } = useListKnowledgesResponse(keyword);
+  const { data } = useListMemoriesResponse(keyword);
 
   const onChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => setKeyword(e.target.value),
@@ -24,16 +24,12 @@ export default function Search() {
         />
       </form>
       <ul className={styles.result}>
-        {data?.map((knowledge) => (
-          <Link
-            key={knowledge.title}
-            href={`description/${knowledge.link}`}
-            passHref
-          >
-            <li className={styles.resultItem} key={knowledge.title}>
-              <h3>{knowledge.title}</h3>
+        {data?.map((memory) => (
+          <Link key={memory.title} href={`memory/${memory.link}`} passHref>
+            <li className={styles.resultItem} key={memory.title}>
+              <h3>{memory.title}</h3>
               <ul>
-                {knowledge.summaries.map((summary) => (
+                {memory.summaries.map((summary) => (
                   <li key={summary}>{summary}</li>
                 ))}
               </ul>

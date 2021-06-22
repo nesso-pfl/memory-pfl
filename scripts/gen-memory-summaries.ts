@@ -10,7 +10,7 @@ type AST = Node & {
   value?: string;
 };
 
-const blogsPath = "./pages/description";
+const blogsPath = "./pages/memory";
 
 const getSummaries = function (markdown: string) {
   // Parse to AST
@@ -52,11 +52,11 @@ fs.readdir(blogsPath, (err, files) => {
     });
 
   fs.writeFile(
-    "./generated/knowledge-summary.json",
+    "./generated/memory-summaries.json",
     JSON.stringify(summaries, null, "  "),
     (err) => {
       if (err) throw err;
-      console.log("Knowledge summaries generated.");
+      console.log("Memory summaries generated.");
     }
   );
 });

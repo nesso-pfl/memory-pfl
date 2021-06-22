@@ -1,20 +1,20 @@
 import { useResponse } from "./useResponse";
-import * as mdxs from "../../pages/description/_index";
-import summaries from "../../generated/knowledge-summary.json";
+import * as mdxs from "../../pages/memory/_index";
+import summaries from "../../generated/memory-summaries.json";
 import type { NextApiRequest, NextApiResponse } from "next";
 
-type Knowledge = {
+type Memory = {
   title: string;
   link: string;
   summaries: string[];
 };
 
-type Response = Knowledge[];
+type Response = Memory[];
 
 const castString = (queryParam: string | string[]) =>
   typeof queryParam === "string" ? queryParam : queryParam[0];
 
-export function listKnowledges(
+export function listMemories(
   { query }: NextApiRequest,
   res: NextApiResponse<Response>
 ) {
@@ -31,6 +31,6 @@ export function listKnowledges(
   res.status(200).json(searchResult);
 }
 
-export const useListKnowledgesResponse = (keyword: string) => {
-  return useResponse<Response>(`/api/list-knowledges?keyword=${keyword}`);
+export const useListMemoriesResponse = (keyword: string) => {
+  return useResponse<Response>(`/api/list-memories?keyword=${keyword}`);
 };

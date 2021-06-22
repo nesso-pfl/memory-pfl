@@ -1,1 +1,1 @@
-export { listKnowledges, useListKnowledgesResponse } from "./list-knowledges";
+export { listMemories, useListMemoriesResponse } from "./list-memories";
