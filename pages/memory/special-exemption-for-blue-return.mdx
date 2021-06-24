@@ -1,0 +1,21 @@
+import { Layout, MarkdownContainer, Tags } from '../../components'
+
+export const meta = {
+  title: '青色申告特別控除',
+  tags: ['確定申告'],
+};
+
+# 青色申告特別控除
+
+<Tags tags={meta.tags} />
+
+## 概要
+- 青色申告をすると追加される控除
+- 額は普通55万円
+- 電子申告をすると65万円の控除が受けられる
+
+## 参考
+- [No.2072 青色申告特別控除｜国税庁](https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/2072.htm)
+
+
+export default ({ children }) => <Layout><MarkdownContainer>{children}</MarkdownContainer></Layout>;

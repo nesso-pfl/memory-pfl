@@ -1,0 +1,20 @@
+import { Layout, MarkdownContainer, Tags } from '../../components'
+
+export const meta = {
+  title: '基礎控除',
+  tags: ['確定申告'],
+};
+
+# 基礎控除
+
+<Tags tags={meta.tags} />
+
+## 概要
+- 誰もが受けられる所得控除
+- 額は普通48万円
+
+## 参考
+- [No.1199 基礎控除｜国税庁](https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1199.htm)
+
+
+export default ({ children }) => <Layout><MarkdownContainer>{children}</MarkdownContainer></Layout>;

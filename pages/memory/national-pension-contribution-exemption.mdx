@@ -1,0 +1,21 @@
+import { Layout, MarkdownContainer, Tags } from '../../components'
+
+export const meta = {
+  title: '国民年金保険料',
+  tags: ['確定申告'],
+};
+
+# 国民年金保険料
+
+<Tags tags={meta.tags} />
+
+## 概要
+- 月額17000円をベースに、その前年の物価や賃金の変動率によって決まる
+  - 17000は令和以降の基準、今後変わりうる(?)
+- 2017~2021年は、凡そ16500円/月 に収まっている
+
+## 参考
+- [国民年金保険料の額は、どのようにして決まるのか？｜日本年金機構](https://www.nenkin.go.jp/service/kokunen/hokenryo/20150331-02.html)
+
+
+export default ({ children }) => <Layout><MarkdownContainer>{children}</MarkdownContainer></Layout>;

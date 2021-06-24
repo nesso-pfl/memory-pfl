@@ -1,11 +1,53 @@
 [
   {
+    "link": "basic-exemption",
+    "title": "基礎控除",
+    "summaries": [
+      "誰もが受けられる所得控除",
+      "額は普通48万円"
+    ]
+  },
+  {
     "link": "css",
     "title": "CSS",
     "summaries": [
       "Cascading Style Sheets の略",
       "スタイルシート言語に分類される",
       "Web ページのスタイルを定義する"
+    ]
+  },
+  {
+    "link": "income-tax",
+    "title": "所得税",
+    "summaries": [
+      "<所得税> := <所得> * <所得税率> - <控除B>"
+    ]
+  },
+  {
+    "link": "national-health-insurance",
+    "title": "国民健康保険",
+    "summaries": [
+      "自営業は大体入ることになる保険（義務）",
+      "大体所得に応じて高くなる",
+      "確定申告の控除対象になる",
+      "市区町村か保険組合が運営していて、それぞれ保険料が違う"
+    ]
+  },
+  {
+    "link": "national-pension-contribution-exemption",
+    "title": "国民年金保険料",
+    "summaries": [
+      "月額17000円をベースに、その前年の物価や賃金の変動率によって決まる",
+      "2017~2021年は、凡そ16500円/月 に収まっている"
+    ]
+  },
+  {
+    "link": "special-exemption-for-blue-return",
+    "title": "青色申告特別控除",
+    "summaries": [
+      "青色申告をすると追加される控除",
+      "額は普通55万円",
+      "電子申告をすると65万円の控除が受けられる"
     ]
   }
 ]

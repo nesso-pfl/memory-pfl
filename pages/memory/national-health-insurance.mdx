@@ -1,0 +1,32 @@
+import { Layout, MarkdownContainer, Tags } from '../../components'
+
+export const meta = {
+  title: '国民健康保険',
+  tags: ['確定申告'],
+};
+
+# 国民健康保険
+
+<Tags tags={meta.tags} />
+
+## 概要
+- 自営業は大体入ることになる保険（義務）
+  - 会社勤めの人は社会保険（知らんけど）
+  - 法人化すると安くなるらしい
+- 大体所得に応じて高くなる
+- 確定申告の控除対象になる
+- 市区町村か保険組合が運営していて、それぞれ保険料が違う
+  - 保険料算出の仕組みは同じ
+
+## 算出方法
+- 基礎（医療）分（max 63万）
+  - <所得合計> × 0.0713 + <加入人数> * 38800
+- 支援金分（max 19万）
+  - <所得合計> × 0.0241 + <加入人数> * 13200
+
+## 参考
+- [保険料の計算方法 | 世田谷区ホームページ](https://www.city.setagaya.lg.jp/mokuji/kurashi/003/002/003/d00032129.html)
+- [国民健康保険の保険料はみんないくら払ってる？20代・30代の月額平均](https://hoken-room.jp/medical/7748)
+
+
+export default ({ children }) => <Layout><MarkdownContainer>{children}</MarkdownContainer></Layout>;
