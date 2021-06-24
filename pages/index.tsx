@@ -19,7 +19,7 @@ const Search: React.VFC = () => {
   );
 
   return (
-    <Layout>
+    <Layout title="トップ">
       <form className={styles.inputForm}>
         <input
           className={styles.searchInput}
