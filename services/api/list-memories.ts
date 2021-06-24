@@ -1,6 +1,6 @@
 import { useResponse } from "./useResponse";
 import { queryParamToString } from "../router";
-import * as mdxs from "../../pages/memory/_index";
+import * as mdxs from "../../components/blog-pages";
 import summaries from "../../generated/memory-summaries.json";
 import type { NextApiRequest, NextApiResponse } from "next";
 
