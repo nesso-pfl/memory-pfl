@@ -1,3 +1,4 @@
 /output/
 /.spago/
 /node_modules/
+/dist/
