@@ -1,6 +1,17 @@
 {
   "folders": [
-    { "path": "backend" },
-    { "path": "frontend" }
+    {
+      "path": ".",
+      "name": "root"
+    },
+    {
+      "path": "docs"
+    },
+    {
+      "path": "backend"
+    },
+    {
+      "path": "frontend"
+    }
   ]
 }
