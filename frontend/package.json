@@ -2,7 +2,7 @@
   "name": "frontend",
   "private": true,
   "scripts": {
-    "build": "npx spago bundle --bundle-type app --outfile dist/app.js && cp static/index.html dist/"
+    "build": "npx spago bundle --bundle-type app --outfile dist/app.js && cp -r public/. dist/"
   },
   "devDependencies": {
     "esbuild": "^0.27.3",
