@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - data:/data
+
+  # MCP Server（未実装・実装後に有効化）
+  # mcp-server:
+  #   build: ...
+  #   depends_on:
+  #     - app
+
+volumes:
+  data:
