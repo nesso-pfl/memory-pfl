@@ -5,9 +5,7 @@ cd "$(dirname "$0")"
 
 echo "==> Building frontend..."
 cd frontend
-PATH="$PWD/node_modules/.bin:$PATH"
-npx spago bundle --bundle-type app --outfile dist/app.js
-cp static/index.html dist/
+npm run build
 cd ..
 
 echo "==> Building backend..."
