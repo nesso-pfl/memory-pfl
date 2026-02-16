@@ -1,0 +1,15 @@
+package:
+  name: frontend
+  dependencies:
+    - aff
+    - console
+    - effect
+    - halogen
+    - prelude
+  test:
+    main: Test.Main
+    dependencies: []
+workspace:
+  packageSet:
+    registry: 73.1.0
+  extraPackages: {}
