@@ -226,6 +226,28 @@ impl MemoryRepository for SqliteMemoryRepository {
         rows.into_iter().map(TryInto::try_into).collect()
     }
 
+    async fn list_tags(&self, category: Option<Category>) -> Result<Vec<String>, RepositoryError> {
+        let (sql, cat_str);
+        match category {
+            Some(ref cat) => {
+                sql = "SELECT DISTINCT j.value FROM memories m, json_each(m.tags) j WHERE m.category = ? ORDER BY j.value";
+                cat_str = Some(cat.as_str());
+            }
+            None => {
+                sql = "SELECT DISTINCT j.value FROM memories, json_each(tags) j ORDER BY j.value";
+                cat_str = None;
+            }
+        }
+        let mut query = sqlx::query_scalar::<_, String>(sql);
+        if let Some(c) = cat_str {
+            query = query.bind(c);
+        }
+        query
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| RepositoryError::Internal(e.into()))
+    }
+
     async fn search(
         &self,
         query_embedding: Vec<f32>,

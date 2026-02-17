@@ -198,6 +198,26 @@ fn default_page() -> usize {
     1
 }
 
+#[derive(Deserialize)]
+struct TagsQuery {
+    category: Option<Category>,
+}
+
+async fn list_tags(
+    _: RequireRead,
+    State(state): State<AppState>,
+    Query(params): Query<TagsQuery>,
+) -> Response {
+    use repository::MemoryRepository;
+    match state.repo.list_tags(params.category).await {
+        Ok(tags) => Json(tags).into_response(),
+        Err(e) => {
+            eprintln!("list_tags error: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
+    }
+}
+
 async fn me_handler(Extension(profile): Extension<UserProfile>) -> Json<UserProfile> {
     Json(profile)
 }
@@ -237,6 +257,7 @@ async fn main() {
 
     let api = Router::new()
         .route("/memories", get(list_memories).post(create_memory))
+        .route("/memories/tags", get(list_tags))
         .route("/memories/{id}", get(get_memory).put(update_memory).delete(delete_memory))
         .route("/auth/me", get(me_handler))
         .layer(axum::middleware::from_fn_with_state(

@@ -31,6 +31,8 @@ pub trait MemoryRepository: Send + Sync {
 
     fn list(&self, category: Option<Category>, tag: Option<String>, limit: usize, offset: usize) -> impl Future<Output = Result<Vec<Memory>, RepositoryError>> + Send;
 
+    fn list_tags(&self, category: Option<Category>) -> impl Future<Output = Result<Vec<String>, RepositoryError>> + Send;
+
     fn search(
         &self,
         query_embedding: Vec<f32>,
