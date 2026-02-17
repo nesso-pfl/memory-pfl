@@ -346,7 +346,7 @@ modal state =
                   [ HH.text "キャンセル" ]
               , HH.button
                   [ HE.onClick \_ -> SubmitMemory
-                  , HP.disabled state.submitting
+                  , HP.disabled (state.submitting || String.null state.formContent)
                   , HP.classes [ H.ClassName "px-4 py-2 text-sm bg-gray-900 text-white rounded-lg disabled:opacity-50" ]
                   ]
                   [ HH.text if state.submitting then "保存中..." else "保存" ]
