@@ -4,7 +4,7 @@ set dotenv-load
 start:
     npm --prefix frontend run watch:purs &
     npm --prefix frontend run watch:css &
-    cd backend && cargo watch -x run
+    cargo watch -C backend -x run
 
 # Build production Docker image
 build-image:
