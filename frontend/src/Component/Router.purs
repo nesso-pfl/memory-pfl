@@ -5,7 +5,7 @@ import Prelude
 import Data.Argonaut.Core (jsonEmptyObject, stringify)
 import Data.Argonaut.Decode.Class (decodeJson)
 import Data.Argonaut.Encode.Combinators ((:=), (~>))
-import Data.Argonaut.Parser (jsonParser)
+import Unsafe.Coerce (unsafeCoerce)
 import Data.Array (filter) as Array
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), isJust)
@@ -271,11 +271,9 @@ handleAction = case _ of
   Initialize -> do
     response <- H.liftAff $ fetch "/auth/me" {}
     when (response.status == 200) do
-      text <- H.liftAff response.text
-      case jsonParser text of
-        Right json -> case decodeJson json of
-          Right p -> H.modify_ _ { profile = Just p }
-          Left _ -> pure unit
+      raw <- H.liftAff response.json
+      case decodeJson (unsafeCoerce raw) of
+        Right p -> H.modify_ _ { profile = Just p }
         Left _ -> pure unit
   SetTab tab -> H.modify_ _ { tab = tab }
   OpenModal -> H.modify_ \s -> s
