@@ -4,8 +4,14 @@ package:
     - aff
     - console
     - effect
+    - either
+    - foreign
     - halogen
+    - maybe
     - prelude
+    - routing
+    - routing-duplex
+    - transformers
   test:
     main: Test.Main
     dependencies: []
