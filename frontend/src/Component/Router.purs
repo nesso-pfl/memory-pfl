@@ -24,6 +24,7 @@ type State =
   , tab :: Tab
   , profile :: Maybe UserProfile
   , memories :: Array Memory
+  , filterTag :: Maybe String
   , showModal :: Boolean
   , formContent :: String
   , formTags :: String
@@ -39,6 +40,7 @@ data Action
   = Initialize
   | FetchMemories
   | SetTab Tab
+  | ToggleTag String
   | OpenModal
   | CloseModal
   | SetFormContent String
@@ -53,6 +55,7 @@ component = H.mkComponent
       , tab: Development
       , profile: Nothing
       , memories: []
+      , filterTag: Nothing
       , showModal: false
       , formContent: ""
       , formTags: ""
@@ -152,16 +155,33 @@ resultList :: forall slots m. State -> H.ComponentHTML Action slots m
 resultList state =
   HH.div
     [ HP.classes [ H.ClassName "flex-1 px-4 py-4 flex flex-col gap-3" ] ]
-    if state.memories == [] then
-      [ HH.p
-          [ HP.classes [ H.ClassName "text-sm text-gray-400 text-center mt-8" ] ]
-          [ HH.text "検索結果がありません" ]
+    ( filterBadge <> content )
+  where
+  filterBadge = case state.filterTag of
+    Just t ->
+      [ HH.div
+          [ HP.classes [ H.ClassName "flex items-center gap-2" ] ]
+          [ HH.span
+              [ HP.classes [ H.ClassName "text-xs text-gray-500" ] ]
+              [ HH.text "タグ:" ]
+          , HH.button
+              [ HE.onClick \_ -> ToggleTag t
+              , HP.classes [ H.ClassName "text-xs bg-gray-900 text-white px-2 py-0.5 rounded cursor-pointer inline-flex items-center gap-1" ]
+              ]
+              [ HH.text t, HH.text " \x2715" ]
+          ]
       ]
-    else
-      (map memoryCard state.memories)
+    Nothing -> []
+  content
+    | state.memories == [] =
+        [ HH.p
+            [ HP.classes [ H.ClassName "text-sm text-gray-400 text-center mt-8" ] ]
+            [ HH.text "検索結果がありません" ]
+        ]
+    | otherwise = map (memoryCard state.filterTag) state.memories
 
-memoryCard :: forall slots m. Memory -> H.ComponentHTML Action slots m
-memoryCard mem =
+memoryCard :: forall slots m. Maybe String -> Memory -> H.ComponentHTML Action slots m
+memoryCard activeTag mem =
   HH.div
     [ HP.classes [ H.ClassName "bg-white rounded-lg border p-4 flex flex-col gap-2" ] ]
     [ HH.p
@@ -169,14 +189,20 @@ memoryCard mem =
         [ HH.text mem.content ]
     , HH.div
         [ HP.classes [ H.ClassName "flex gap-2 flex-wrap" ] ]
-        (map tag mem.tags)
+        (map (tagBadge activeTag) mem.tags)
     ]
 
-tag :: forall slots m. String -> H.ComponentHTML Action slots m
-tag t =
-  HH.span
-    [ HP.classes [ H.ClassName "text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded" ] ]
+tagBadge :: forall slots m. Maybe String -> String -> H.ComponentHTML Action slots m
+tagBadge activeTag t =
+  HH.button
+    [ HE.onClick \_ -> ToggleTag t
+    , HP.classes [ H.ClassName classes ]
+    ]
     [ HH.text t ]
+  where
+  classes
+    | activeTag == Just t = "text-xs bg-gray-900 text-white px-2 py-0.5 rounded cursor-pointer"
+    | otherwise = "text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded cursor-pointer hover:bg-gray-200"
 
 fab :: forall slots m. H.ComponentHTML Action slots m
 fab =
@@ -286,13 +312,18 @@ handleAction = case _ of
     profile <- getProfile
     H.modify_ _ { profile = profile }
   FetchMemories -> do
-    tab <- H.gets _.tab
-    result <- listMemories { category: Just (toCategory tab), page: Nothing, limit: Nothing }
+    state <- H.get
+    result <- listMemories { category: Just (toCategory state.tab), tag: state.filterTag, page: Nothing, limit: Nothing }
     case result of
       Right memories -> H.modify_ _ { memories = memories }
       Left _ -> pure unit
   SetTab tab ->
     replaceRoute (Home (Just (toCategory tab)))
+  ToggleTag t -> do
+    current <- H.gets _.filterTag
+    let next = if current == Just t then Nothing else Just t
+    H.modify_ _ { filterTag = next }
+    handleAction FetchMemories
   OpenModal -> H.modify_ \s -> s
     { showModal = true
     , formContent = ""
@@ -323,6 +354,6 @@ handleQuery :: forall slots o m a. MonadUser m => MonadMemory m => Navigate m =>
 handleQuery (Navigate route a) = do
   let tab = case route of
         Home maybeTab -> fromMaybe Development (maybeTab >>= fromCategory)
-  H.modify_ _ { route = Just route, tab = tab }
+  H.modify_ _ { route = Just route, tab = tab, filterTag = Nothing }
   handleAction FetchMemories
   pure (Just a)

@@ -26,13 +26,14 @@ type CreateMemory =
   { content :: String, tags :: Array String, category :: String }
 
 type ListParams =
-  { category :: Maybe String, page :: Maybe Int, limit :: Maybe Int }
+  { category :: Maybe String, tag :: Maybe String, page :: Maybe Int, limit :: Maybe Int }
 
 listMemories :: ListParams -> Aff (Either String (Array Memory))
 listMemories params = do
   let
     pairs = catMaybes
       [ map (\c -> "category=" <> c) params.category
+      , map (\t -> "tag=" <> t) params.tag
       , map (\p -> "page=" <> show p) params.page
       , map (\l -> "limit=" <> show l) params.limit
       ]

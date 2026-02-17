@@ -188,33 +188,40 @@ impl MemoryRepository for SqliteMemoryRepository {
     async fn list(
         &self,
         category: Option<Category>,
+        tag: Option<String>,
         limit: usize,
         offset: usize,
     ) -> Result<Vec<Memory>, RepositoryError> {
         let limit = limit as i64;
         let offset = offset as i64;
-        let rows: Vec<MemoryRow> = match category {
-            Some(cat) => {
-                sqlx::query_as(
-                    "SELECT * FROM memories WHERE category = ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
-                )
-                .bind(cat.as_str())
-                .bind(limit)
-                .bind(offset)
-                .fetch_all(&self.pool)
-                .await
-            }
-            None => {
-                sqlx::query_as(
-                    "SELECT * FROM memories ORDER BY created_at DESC LIMIT ? OFFSET ?",
-                )
-                .bind(limit)
-                .bind(offset)
-                .fetch_all(&self.pool)
-                .await
-            }
+
+        let mut sql = String::from("SELECT * FROM memories");
+        let mut conditions = Vec::new();
+        if category.is_some() {
+            conditions.push("category = ?");
         }
-        .map_err(|e| RepositoryError::Internal(e.into()))?;
+        if tag.is_some() {
+            conditions.push("EXISTS (SELECT 1 FROM json_each(tags) WHERE json_each.value = ?)");
+        }
+        if !conditions.is_empty() {
+            sql.push_str(" WHERE ");
+            sql.push_str(&conditions.join(" AND "));
+        }
+        sql.push_str(" ORDER BY created_at DESC LIMIT ? OFFSET ?");
+
+        let mut query = sqlx::query_as::<_, MemoryRow>(&sql);
+        if let Some(ref cat) = category {
+            query = query.bind(cat.as_str());
+        }
+        if let Some(ref t) = tag {
+            query = query.bind(t.as_str());
+        }
+        query = query.bind(limit).bind(offset);
+
+        let rows: Vec<MemoryRow> = query
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| RepositoryError::Internal(e.into()))?;
 
         rows.into_iter().map(TryInto::try_into).collect()
     }
