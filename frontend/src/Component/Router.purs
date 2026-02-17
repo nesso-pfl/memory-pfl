@@ -27,6 +27,7 @@ type State =
   , memories :: Array Memory
   , allTags :: Array String
   , tagInput :: String
+  , tagFocused :: Boolean
   , filterTag :: Maybe String
   , showModal :: Boolean
   , formContent :: String
@@ -44,6 +45,8 @@ data Action
   | FetchMemories
   | SetTab Tab
   | SetTagInput String
+  | TagFocus
+  | TagBlur
   | SelectTag String
   | ClearTag
   | OpenModal
@@ -62,6 +65,7 @@ component = H.mkComponent
       , memories: []
       , allTags: []
       , tagInput: ""
+      , tagFocused: false
       , filterTag: Nothing
       , showModal: false
       , formContent: ""
@@ -134,24 +138,26 @@ tagSearch state =
           , HP.placeholder "\x1F50D タグで検索..."
           , HP.value state.tagInput
           , HE.onValueInput SetTagInput
+          , HE.onFocusIn \_ -> TagFocus
+          , HE.onFocusOut \_ -> TagBlur
           , HP.classes [ H.ClassName "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" ]
           ]
       ] <> suggestions
     )
   where
-  suggestions
-    | String.null state.tagInput = []
+  matched
+    | String.null state.tagInput = state.allTags
     | otherwise =
-        let
-          input = String.toLower state.tagInput
-          matched = Array.filter (\t -> String.contains (Pattern input) (String.toLower t)) state.allTags
-        in
-          if Array.null matched then []
-          else
-            [ HH.div
-                [ HP.classes [ H.ClassName "absolute left-4 right-4 mt-1 bg-white border rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto" ] ]
-                (map suggestionItem matched)
-            ]
+        let input = String.toLower state.tagInput
+        in Array.filter (\t -> String.contains (Pattern input) (String.toLower t)) state.allTags
+  suggestions
+    | not state.tagFocused = []
+    | Array.null matched = []
+    | otherwise =
+        [ HH.div
+            [ HP.classes [ H.ClassName "absolute left-4 right-4 mt-1 bg-white border rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto" ] ]
+            (map suggestionItem matched)
+        ]
   suggestionItem t =
     HH.button
       [ HE.onClick \_ -> SelectTag t
@@ -363,8 +369,12 @@ handleAction = case _ of
     replaceRoute (Home (Just (toCategory tab)))
   SetTagInput v ->
     H.modify_ _ { tagInput = v }
+  TagFocus ->
+    H.modify_ _ { tagFocused = true }
+  TagBlur ->
+    H.modify_ _ { tagFocused = false }
   SelectTag t -> do
-    H.modify_ _ { filterTag = Just t, tagInput = "" }
+    H.modify_ _ { filterTag = Just t, tagInput = "", tagFocused = false }
     handleAction FetchMemories
   ClearTag -> do
     H.modify_ _ { filterTag = Nothing }
