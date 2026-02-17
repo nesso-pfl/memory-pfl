@@ -185,11 +185,13 @@ impl MemoryRepository for SqliteMemoryRepository {
         Ok(())
     }
 
-    async fn list(&self, limit: usize) -> Result<Vec<Memory>, RepositoryError> {
+    async fn list(&self, limit: usize, offset: usize) -> Result<Vec<Memory>, RepositoryError> {
         let limit = limit as i64;
+        let offset = offset as i64;
         let rows: Vec<MemoryRow> =
-            sqlx::query_as("SELECT * FROM memories ORDER BY created_at DESC LIMIT ?")
+            sqlx::query_as("SELECT * FROM memories ORDER BY created_at DESC LIMIT ? OFFSET ?")
                 .bind(limit)
+                .bind(offset)
                 .fetch_all(&self.pool)
                 .await
                 .map_err(|e| RepositoryError::Internal(e.into()))?;

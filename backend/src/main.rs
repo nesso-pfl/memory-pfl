@@ -86,7 +86,8 @@ async fn list_memories(
 
     if params.q.is_empty() {
         let limit = params.limit.min(200);
-        return match state.repo.list(limit).await {
+        let offset = params.page.saturating_sub(1) * limit;
+        return match state.repo.list(limit, offset).await {
             Ok(memories) => Json(memories).into_response(),
             Err(e) => {
                 eprintln!("list_memories error: {e}");
@@ -183,10 +184,16 @@ struct ListQuery {
     q: String,
     #[serde(default = "default_limit")]
     limit: usize,
+    #[serde(default = "default_page")]
+    page: usize,
 }
 
 fn default_limit() -> usize {
     100
+}
+
+fn default_page() -> usize {
+    1
 }
 
 async fn me_handler(Extension(profile): Extension<UserProfile>) -> Json<UserProfile> {
