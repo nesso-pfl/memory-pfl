@@ -175,7 +175,7 @@ async fn main() {
         .route("/memories/{id}", get(get_memory).put(update_memory).delete(delete_memory))
         .fallback(get(static_handler))
         .with_state(state);
-    let port = std::env::var("PORT").unwrap_or_else(|_| "3000".to_string());
+    let port = std::env::var("PORT").unwrap_or_else(|_| "1230".to_string());
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
