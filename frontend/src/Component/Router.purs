@@ -14,7 +14,7 @@ import Data.String.CodeUnits (contains) as String
 import Data.String.Common (joinWith, split, trim, null, toLower) as String
 import Data.String.Pattern (Pattern(..))
 import Data.Tab (Tab(..), fromCategory, toCategory)
-import Data.User (UserProfile, displayName)
+import Data.User (UserProfile)
 import Effect.Class (class MonadEffect, liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
@@ -130,10 +130,20 @@ header state =
         ]
         [ HH.text "memory-pfl" ]
     , case state.profile of
-        Just p ->
-          HH.span
-            [ HP.classes [ H.ClassName "text-sm text-gray-500" ] ]
-            [ HH.text (displayName p) ]
+        Just _ ->
+          HH.div
+            [ HP.classes [ H.ClassName "w-9 h-9 bg-blue-50 rounded-full flex items-center justify-center" ] ]
+            [ HH.element (H.ElemName "svg")
+                [ HP.attr (H.AttrName "viewBox") "0 0 24 24"
+                , HP.attr (H.AttrName "fill") "none"
+                , HP.attr (H.AttrName "stroke") "#3b82f6"
+                , HP.attr (H.AttrName "stroke-width") "2"
+                , HP.classes [ H.ClassName "w-5 h-5" ]
+                ]
+                [ HH.element (H.ElemName "circle") [ HP.attr (H.AttrName "cx") "12", HP.attr (H.AttrName "cy") "8", HP.attr (H.AttrName "r") "4" ] []
+                , HH.element (H.ElemName "path") [ HP.attr (H.AttrName "d") "M4 21v-1a6 6 0 0 1 12 0v1" ] []
+                ]
+            ]
         Nothing ->
           HH.a
             [ HP.href "/auth/login"
@@ -196,7 +206,7 @@ searchBar state =
     [ HP.classes [ H.ClassName "px-5 pt-2 flex gap-2" ] ]
     [ HH.input
         [ HP.type_ HP.InputText
-        , HP.placeholder "\x1F50D キーワード検索..."
+        , HP.placeholder "キーワードで検索"
         , HP.value state.searchQuery
         , HE.onValueInput SetSearchQuery
         , HP.classes [ H.ClassName "flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" ]
@@ -204,9 +214,19 @@ searchBar state =
     , HH.button
         [ HE.onClick \_ -> SubmitSearch
         , HP.disabled (state.searching || String.null state.searchQuery)
-        , HP.classes [ H.ClassName "px-4 py-2.5 text-sm font-medium bg-gray-800 hover:bg-gray-700 text-white rounded-xl disabled:opacity-40 disabled:hover:bg-gray-800" ]
+        , HP.classes [ H.ClassName "w-10 h-10 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-xl disabled:opacity-40 disabled:hover:bg-blue-500" ]
         ]
-        [ HH.text if state.searching then "検索中..." else "検索" ]
+        [ HH.element (H.ElemName "svg")
+            [ HP.attr (H.AttrName "viewBox") "0 0 24 24"
+            , HP.attr (H.AttrName "fill") "none"
+            , HP.attr (H.AttrName "stroke") "currentColor"
+            , HP.attr (H.AttrName "stroke-width") "2.5"
+            , HP.classes [ H.ClassName "w-4.5 h-4.5" ]
+            ]
+            [ HH.element (H.ElemName "circle") [ HP.attr (H.AttrName "cx") "11", HP.attr (H.AttrName "cy") "11", HP.attr (H.AttrName "r") "7" ] []
+            , HH.element (H.ElemName "path") [ HP.attr (H.AttrName "d") "M21 21l-4.35-4.35" ] []
+            ]
+        ]
     ]
 
 tabControl :: forall slots m. State -> H.ComponentHTML Action slots m
@@ -264,23 +284,26 @@ resultList state =
 memoryCard :: forall slots m. Maybe String -> Maybe String -> Memory -> H.ComponentHTML Action slots m
 memoryCard activeTag confirmingDelete mem =
   HH.div
-    [ HP.classes [ H.ClassName "group relative bg-white rounded-xl shadow-sm hover:shadow-md p-5 flex flex-col gap-3" ] ]
+    [ HP.classes [ H.ClassName "relative border border-gray-200 rounded-xl p-5 flex flex-col gap-3" ] ]
     ( [ HH.div
-          [ HP.classes [ H.ClassName "absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" ] ]
-          [ HH.button
-              [ HE.onClick \_ -> StartEdit mem
-              , HP.classes [ H.ClassName "p-1.5 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100" ]
+          [ HP.classes [ H.ClassName "flex items-start gap-3" ] ]
+          [ HH.p
+              [ HP.classes [ H.ClassName "flex-1 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap" ] ]
+              [ HH.text mem.content ]
+          , HH.div
+              [ HP.classes [ H.ClassName "flex gap-1 shrink-0" ] ]
+              [ HH.button
+                  [ HE.onClick \_ -> StartEdit mem
+                  , HP.classes [ H.ClassName "p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100" ]
+                  ]
+                  [ editIcon ]
+              , HH.button
+                  [ HE.onClick \_ -> DeleteMemory mem.id
+                  , HP.classes [ H.ClassName "p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50" ]
+                  ]
+                  [ trashIcon ]
               ]
-              [ HH.text "\x270E" ]
-          , HH.button
-              [ HE.onClick \_ -> DeleteMemory mem.id
-              , HP.classes [ H.ClassName "p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50" ]
-              ]
-              [ HH.text "\x2715" ]
           ]
-      , HH.p
-          [ HP.classes [ H.ClassName "text-sm leading-relaxed text-gray-800 whitespace-pre-wrap" ] ]
-          [ HH.text mem.content ]
       , HH.div
           [ HP.classes [ H.ClassName "flex gap-1.5 flex-wrap" ] ]
           (map (tagBadge activeTag) mem.tags)
@@ -320,8 +343,8 @@ tagBadge activeTag t =
     [ HH.text t ]
   where
   classes
-    | activeTag == Just t = "text-xs font-medium bg-gray-800 text-white px-2.5 py-1 rounded-full"
-    | otherwise = "text-xs font-medium bg-gray-100 text-gray-500 px-2.5 py-1 rounded-full hover:bg-gray-200 hover:text-gray-700"
+    | activeTag == Just t = "text-xs font-medium bg-blue-500 text-white px-2.5 py-1 rounded-full"
+    | otherwise = "text-xs font-medium text-blue-500 border border-blue-200 bg-blue-50 px-2.5 py-1 rounded-full hover:bg-blue-100"
 
 fab :: forall slots m. H.ComponentHTML Action slots m
 fab =
@@ -423,6 +446,31 @@ footer =
         , HP.classes [ H.ClassName "text-gray-400 hover:text-gray-600 underline" ]
         ]
         [ HH.text "nesso-pfl" ]
+    ]
+
+editIcon :: forall slots m. H.ComponentHTML Action slots m
+editIcon =
+  HH.element (H.ElemName "svg")
+    [ HP.attr (H.AttrName "viewBox") "0 0 24 24"
+    , HP.attr (H.AttrName "fill") "none"
+    , HP.attr (H.AttrName "stroke") "currentColor"
+    , HP.attr (H.AttrName "stroke-width") "2"
+    , HP.classes [ H.ClassName "w-4 h-4" ]
+    ]
+    [ HH.element (H.ElemName "path") [ HP.attr (H.AttrName "d") "M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" ] [] ]
+
+trashIcon :: forall slots m. H.ComponentHTML Action slots m
+trashIcon =
+  HH.element (H.ElemName "svg")
+    [ HP.attr (H.AttrName "viewBox") "0 0 24 24"
+    , HP.attr (H.AttrName "fill") "none"
+    , HP.attr (H.AttrName "stroke") "currentColor"
+    , HP.attr (H.AttrName "stroke-width") "2"
+    , HP.classes [ H.ClassName "w-4 h-4" ]
+    ]
+    [ HH.element (H.ElemName "path") [ HP.attr (H.AttrName "d") "M3 6h18" ] []
+    , HH.element (H.ElemName "path") [ HP.attr (H.AttrName "d") "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" ] []
+    , HH.element (H.ElemName "path") [ HP.attr (H.AttrName "d") "M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" ] []
     ]
 
 handleAction :: forall slots o m. MonadEffect m => MonadUser m => MonadMemory m => Navigate m => Action -> H.HalogenM State Action slots o m Unit
