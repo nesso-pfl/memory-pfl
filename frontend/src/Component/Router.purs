@@ -195,7 +195,7 @@ searchBar state =
         ]
     , HH.button
         [ HE.onClick \_ -> SubmitSearch
-        , HP.disabled state.searching
+        , HP.disabled (state.searching || String.null state.searchQuery)
         , HP.classes [ H.ClassName "px-3 py-2 text-sm bg-gray-900 text-white rounded-lg disabled:opacity-50" ]
         ]
         [ HH.text if state.searching then "検索中..." else "検索" ]
