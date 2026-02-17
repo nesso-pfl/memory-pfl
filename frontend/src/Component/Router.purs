@@ -119,6 +119,7 @@ main state =
   HH.main
     [ HP.classes [ H.ClassName "flex-1 flex flex-col" ] ]
     ( [ tagSearch state
+      , searchBar
       , tabControl state
       , resultList state
       ] <> if isJust state.profile then [ fab ] else []
@@ -157,6 +158,17 @@ tagSearch state =
       , HP.classes [ H.ClassName "w-full text-left px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer" ]
       ]
       [ HH.text t ]
+
+searchBar :: forall slots m. H.ComponentHTML Action slots m
+searchBar =
+  HH.div
+    [ HP.classes [ H.ClassName "px-4 pt-2" ] ]
+    [ HH.input
+        [ HP.type_ HP.InputText
+        , HP.placeholder "\x1F50D 検索..."
+        , HP.classes [ H.ClassName "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" ]
+        ]
+    ]
 
 tabControl :: forall slots m. State -> H.ComponentHTML Action slots m
 tabControl state =
