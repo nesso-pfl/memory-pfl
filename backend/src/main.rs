@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use auth::{AuthConfig, AuthState, Claims, roles::MemoryPflApiRole};
 use axum::{
-    Extension, Json, Router,
-    extract::{Path, Query, State},
-    http::{StatusCode, header},
+    Json, Router,
+    extract::{FromRequestParts, Path, Query, State},
+    http::{StatusCode, header, request::Parts},
     response::{IntoResponse, Response},
     routing::get,
 };
@@ -51,10 +51,33 @@ struct AppStateInner {
 
 type AppState = Arc<AppStateInner>;
 
-async fn list_memories(Extension(claims): Extension<Claims>, State(state): State<AppState>) -> Response {
-    if !claims.has_role(&MemoryPflApiRole::Read) {
-        return StatusCode::FORBIDDEN.into_response();
+struct RequireRead;
+
+impl<S: Send + Sync> FromRequestParts<S> for RequireRead {
+    type Rejection = StatusCode;
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        let claims = parts.extensions.get::<Claims>().ok_or(StatusCode::UNAUTHORIZED)?;
+        claims
+            .has_role(&MemoryPflApiRole::Read)
+            .then_some(Self)
+            .ok_or(StatusCode::FORBIDDEN)
     }
+}
+
+struct RequireWrite;
+
+impl<S: Send + Sync> FromRequestParts<S> for RequireWrite {
+    type Rejection = StatusCode;
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        let claims = parts.extensions.get::<Claims>().ok_or(StatusCode::UNAUTHORIZED)?;
+        claims
+            .has_role(&MemoryPflApiRole::Write)
+            .then_some(Self)
+            .ok_or(StatusCode::FORBIDDEN)
+    }
+}
+
+async fn list_memories(_: RequireRead, State(state): State<AppState>) -> Response {
     use repository::MemoryRepository;
     match state.repo.list().await {
         Ok(memories) => Json(memories).into_response(),
@@ -65,10 +88,7 @@ async fn list_memories(Extension(claims): Extension<Claims>, State(state): State
     }
 }
 
-async fn get_memory(Extension(claims): Extension<Claims>, State(state): State<AppState>, Path(id): Path<String>) -> Response {
-    if !claims.has_role(&MemoryPflApiRole::Read) {
-        return StatusCode::FORBIDDEN.into_response();
-    }
+async fn get_memory(_: RequireRead, State(state): State<AppState>, Path(id): Path<String>) -> Response {
     use repository::MemoryRepository;
     match state.repo.get(&id).await {
         Ok(memory) => Json(memory).into_response(),
@@ -81,13 +101,10 @@ async fn get_memory(Extension(claims): Extension<Claims>, State(state): State<Ap
 }
 
 async fn create_memory(
-    Extension(claims): Extension<Claims>,
+    _: RequireWrite,
     State(state): State<AppState>,
     Json(input): Json<CreateMemory>,
 ) -> Response {
-    if !claims.has_role(&MemoryPflApiRole::Write) {
-        return StatusCode::FORBIDDEN.into_response();
-    }
     use repository::MemoryRepository;
 
     let embedding = match state.gemini.embed(&input.content, "RETRIEVAL_DOCUMENT").await {
@@ -108,14 +125,11 @@ async fn create_memory(
 }
 
 async fn update_memory(
-    Extension(claims): Extension<Claims>,
+    _: RequireWrite,
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(input): Json<UpdateMemory>,
 ) -> Response {
-    if !claims.has_role(&MemoryPflApiRole::Write) {
-        return StatusCode::FORBIDDEN.into_response();
-    }
     use repository::MemoryRepository;
     match state.repo.update(&id, input).await {
         Ok(memory) => Json(memory).into_response(),
@@ -127,10 +141,7 @@ async fn update_memory(
     }
 }
 
-async fn delete_memory(Extension(claims): Extension<Claims>, State(state): State<AppState>, Path(id): Path<String>) -> Response {
-    if !claims.has_role(&MemoryPflApiRole::Write) {
-        return StatusCode::FORBIDDEN.into_response();
-    }
+async fn delete_memory(_: RequireWrite, State(state): State<AppState>, Path(id): Path<String>) -> Response {
     use repository::MemoryRepository;
     match state.repo.delete(&id).await {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
@@ -148,13 +159,10 @@ struct SearchQuery {
 }
 
 async fn search_memories(
-    Extension(claims): Extension<Claims>,
+    _: RequireRead,
     State(state): State<AppState>,
     Query(params): Query<SearchQuery>,
 ) -> Response {
-    if !claims.has_role(&MemoryPflApiRole::Read) {
-        return StatusCode::FORBIDDEN.into_response();
-    }
     use repository::MemoryRepository;
 
     let embedding = match state.gemini.embed(&params.q, "RETRIEVAL_QUERY").await {
