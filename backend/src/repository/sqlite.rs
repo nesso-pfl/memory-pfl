@@ -69,12 +69,26 @@ impl SqliteMemoryRepository {
         .await
         .map_err(|e| RepositoryError::Internal(e.into()))?;
 
+        sqlx::query(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS vec_memories USING vec0(
+                id TEXT PRIMARY KEY,
+                embedding float[768]
+            )",
+        )
+        .execute(&pool)
+        .await
+        .map_err(|e| RepositoryError::Internal(e.into()))?;
+
         Ok(Self { pool })
     }
 }
 
 impl MemoryRepository for SqliteMemoryRepository {
-    async fn create(&self, input: CreateMemory) -> Result<Memory, RepositoryError> {
+    async fn create(
+        &self,
+        input: CreateMemory,
+        embedding: Vec<f32>,
+    ) -> Result<Memory, RepositoryError> {
         let id = Uuid::new_v4().to_string();
         let now = Utc::now();
         let tags_json =
@@ -93,6 +107,14 @@ impl MemoryRepository for SqliteMemoryRepository {
         .execute(&self.pool)
         .await
         .map_err(|e| RepositoryError::Internal(e.into()))?;
+
+        let embedding_bytes: Vec<u8> = embedding.iter().flat_map(|f| f.to_le_bytes()).collect();
+        sqlx::query("INSERT INTO vec_memories (id, embedding) VALUES (?, ?)")
+            .bind(&id)
+            .bind(&embedding_bytes)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| RepositoryError::Internal(e.into()))?;
 
         Ok(Memory {
             id,
@@ -168,6 +190,33 @@ impl MemoryRepository for SqliteMemoryRepository {
             .fetch_all(&self.pool)
             .await
             .map_err(|e| RepositoryError::Internal(e.into()))?;
+
+        rows.into_iter().map(TryInto::try_into).collect()
+    }
+
+    async fn search(
+        &self,
+        query_embedding: Vec<f32>,
+        limit: usize,
+    ) -> Result<Vec<Memory>, RepositoryError> {
+        let embedding_bytes: Vec<u8> =
+            query_embedding.iter().flat_map(|f| f.to_le_bytes()).collect();
+        let limit = limit as i64;
+
+        let rows: Vec<MemoryRow> = sqlx::query_as(
+            "SELECT m.id, m.content, m.tags, m.category, m.created_at, m.updated_at
+             FROM memories m
+             INNER JOIN vec_memories v ON m.id = v.id
+             WHERE v.embedding MATCH ?
+               AND k = ?
+             ORDER BY distance",
+        )
+        .bind(&embedding_bytes)
+        .bind(limit)
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| RepositoryError::Internal(e.into()))?;
 
         rows.into_iter().map(TryInto::try_into).collect()
     }

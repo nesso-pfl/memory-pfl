@@ -16,6 +16,7 @@ pub trait MemoryRepository: Send + Sync {
     fn create(
         &self,
         input: CreateMemory,
+        embedding: Vec<f32>,
     ) -> impl Future<Output = Result<Memory, RepositoryError>> + Send;
 
     fn get(&self, id: &str) -> impl Future<Output = Result<Memory, RepositoryError>> + Send;
@@ -29,4 +30,10 @@ pub trait MemoryRepository: Send + Sync {
     fn delete(&self, id: &str) -> impl Future<Output = Result<(), RepositoryError>> + Send;
 
     fn list(&self) -> impl Future<Output = Result<Vec<Memory>, RepositoryError>> + Send;
+
+    fn search(
+        &self,
+        query_embedding: Vec<f32>,
+        limit: usize,
+    ) -> impl Future<Output = Result<Vec<Memory>, RepositoryError>> + Send;
 }
