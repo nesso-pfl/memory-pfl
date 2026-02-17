@@ -138,9 +138,9 @@ main :: forall slots m. State -> H.ComponentHTML Action slots m
 main state =
   HH.main
     [ HP.classes [ H.ClassName "flex-1 flex flex-col" ] ]
-    ( [ tagSearch state
+    ( [ tabControl state
+      , tagSearch state
       , searchBar state
-      , tabControl state
       , resultList state
       ] <> if isJust state.profile then [ fab ] else []
     )
