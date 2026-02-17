@@ -2,7 +2,7 @@ module Component.Router where
 
 import Prelude
 
-import Capability.Memory (class MonadMemory, createMemory, listMemories, listTags)
+import Capability.Memory (class MonadMemory, createMemory, deleteMemory, listMemories, listTags, updateMemory)
 import Capability.Navigate (class Navigate, replaceRoute)
 import Capability.User (class MonadUser, getProfile)
 import Data.Array (filter, null) as Array
@@ -11,7 +11,7 @@ import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Memory (Memory)
 import Data.Route (Route(..))
 import Data.String.CodeUnits (contains) as String
-import Data.String.Common (split, trim, null, toLower) as String
+import Data.String.Common (joinWith, split, trim, null, toLower) as String
 import Data.String.Pattern (Pattern(..))
 import Data.Tab (Tab(..), fromCategory, toCategory)
 import Data.User (UserProfile, displayName)
@@ -42,6 +42,7 @@ type State =
   , searchQuery :: String
   , searching :: Boolean
   , showModal :: Boolean
+  , editingId :: Maybe String
   , formContent :: String
   , formTags :: String
   , formCategory :: Tab
@@ -63,6 +64,8 @@ data Action
   | ClearTag
   | SetSearchQuery String
   | SubmitSearch
+  | StartEdit Memory
+  | DeleteMemory String
   | OpenModal
   | CloseModal
   | SetFormContent String
@@ -84,6 +87,7 @@ component = H.mkComponent
       , searchQuery: ""
       , searching: false
       , showModal: false
+      , editingId: Nothing
       , formContent: ""
       , formTags: ""
       , formCategory: Development
@@ -256,8 +260,21 @@ resultList state =
 memoryCard :: forall slots m. Maybe String -> Memory -> H.ComponentHTML Action slots m
 memoryCard activeTag mem =
   HH.div
-    [ HP.classes [ H.ClassName "bg-white rounded-xl shadow-sm hover:shadow-md p-5 flex flex-col gap-3" ] ]
-    [ HH.p
+    [ HP.classes [ H.ClassName "group relative bg-white rounded-xl shadow-sm hover:shadow-md p-5 flex flex-col gap-3" ] ]
+    [ HH.div
+        [ HP.classes [ H.ClassName "absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" ] ]
+        [ HH.button
+            [ HE.onClick \_ -> StartEdit mem
+            , HP.classes [ H.ClassName "p-1.5 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100" ]
+            ]
+            [ HH.text "\x270E" ]
+        , HH.button
+            [ HE.onClick \_ -> DeleteMemory mem.id
+            , HP.classes [ H.ClassName "p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50" ]
+            ]
+            [ HH.text "\x2715" ]
+        ]
+    , HH.p
         [ HP.classes [ H.ClassName "text-sm leading-relaxed text-gray-800 whitespace-pre-wrap" ] ]
         [ HH.text mem.content ]
     , HH.div
@@ -312,7 +329,7 @@ modal state =
         else
           [ HH.h2
               [ HP.classes [ H.ClassName "text-lg font-bold text-gray-900" ] ]
-              [ HH.text "メモリを作成" ]
+              [ HH.text if isJust state.editingId then "メモリを編集" else "メモリを作成" ]
           , HH.textarea
               [ HP.placeholder "内容を入力..."
               , HP.value state.formContent
@@ -419,8 +436,30 @@ handleAction = case _ of
     H.modify_ _ { searchQuery = v }
   SubmitSearch ->
     handleAction FetchMemories
+  StartEdit mem -> H.modify_ \s -> s
+    { showModal = true
+    , editingId = Just mem.id
+    , formContent = mem.content
+    , formTags = String.joinWith ", " mem.tags
+    , formCategory = fromMaybe s.tab (fromCategory mem.category)
+    , submitting = false
+    , submitError = Nothing
+    , submitSuccess = false
+    }
+  DeleteMemory id -> do
+    result <- deleteMemory id
+    case result of
+      Right _ -> do
+        handleAction FetchMemories
+        tab <- H.gets _.tab
+        tagsResult <- listTags (Just (toCategory tab))
+        case tagsResult of
+          Right tags -> H.modify_ _ { allTags = tags }
+          Left _ -> pure unit
+      Left _ -> pure unit
   OpenModal -> H.modify_ \s -> s
     { showModal = true
+    , editingId = Nothing
     , formContent = ""
     , formTags = ""
     , formCategory = s.tab
@@ -438,7 +477,10 @@ handleAction = case _ of
     let
       tags = Array.filter (not <<< String.null) $ map String.trim $ String.split (Pattern ",") state.formTags
       category = toCategory state.formCategory
-    result <- createMemory { content: state.formContent, tags, category }
+      body = { content: state.formContent, tags, category }
+    result <- case state.editingId of
+      Just id -> updateMemory id body
+      Nothing -> createMemory body
     case result of
       Right _ -> do
         H.modify_ _ { submitting = false, submitSuccess = true }

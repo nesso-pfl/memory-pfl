@@ -12,8 +12,12 @@ class Monad m <= MonadMemory m where
   listMemories :: ListParams -> m (Either String (Array Memory))
   listTags :: Maybe String -> m (Either String (Array String))
   createMemory :: CreateMemory -> m (Either String Unit)
+  updateMemory :: String -> CreateMemory -> m (Either String Unit)
+  deleteMemory :: String -> m (Either String Unit)
 
 instance MonadMemory m => MonadMemory (HalogenM st act slots msg m) where
   listMemories = lift <<< listMemories
   listTags = lift <<< listTags
   createMemory = lift <<< createMemory
+  updateMemory id = lift <<< updateMemory id
+  deleteMemory = lift <<< deleteMemory

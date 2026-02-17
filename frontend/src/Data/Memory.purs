@@ -83,3 +83,29 @@ createMemory mem = do
     pure (Right unit)
   else
     pure (Left "保存に失敗しました")
+
+updateMemory :: String -> CreateMemory -> Aff (Either String Unit)
+updateMemory id mem = do
+  let
+    body = stringify
+      $ "content" := mem.content
+      ~> "tags" := mem.tags
+      ~> "category" := mem.category
+      ~> jsonEmptyObject
+  response <- fetch ("/memories/" <> id)
+    { method: PUT
+    , headers: { "Content-Type": "application/json" }
+    , body
+    }
+  if response.status == 200 then
+    pure (Right unit)
+  else
+    pure (Left "更新に失敗しました")
+
+deleteMemory :: String -> Aff (Either String Unit)
+deleteMemory id = do
+  response <- fetch ("/memories/" <> id) { method: DELETE }
+  if response.status == 204 then
+    pure (Right unit)
+  else
+    pure (Left "削除に失敗しました")
