@@ -1,3 +1,5 @@
+set dotenv-load
+
 # Start frontend watch and backend watch in parallel
 start:
     npm --prefix frontend run watch:purs &
