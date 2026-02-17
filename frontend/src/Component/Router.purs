@@ -32,6 +32,7 @@ type State =
   , formCategory :: Tab
   , submitting :: Boolean
   , submitError :: Maybe String
+  , submitSuccess :: Boolean
   }
 
 data Query a = Navigate Route a
@@ -58,6 +59,7 @@ component = H.mkComponent
       , formCategory: Development
       , submitting: false
       , submitError: Nothing
+      , submitSuccess: false
       }
   , render
   , eval: H.mkEval $ H.defaultEval
@@ -174,48 +176,62 @@ modal state =
         []
     , HH.div
         [ HP.classes [ H.ClassName "relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 flex flex-col gap-4" ] ]
-        [ HH.h2
-            [ HP.classes [ H.ClassName "text-lg font-bold text-gray-900" ] ]
-            [ HH.text "メモリを作成" ]
-        , HH.textarea
-            [ HP.placeholder "内容を入力..."
-            , HP.value state.formContent
-            , HE.onValueInput SetFormContent
-            , HP.classes [ H.ClassName "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none h-32" ]
-            ]
-        , HH.input
-            [ HP.type_ HP.InputText
-            , HP.placeholder "タグ（カンマ区切り）"
-            , HP.value state.formTags
-            , HE.onValueInput SetFormTags
-            , HP.classes [ H.ClassName "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" ]
-            ]
-        , HH.div
-            [ HP.classes [ H.ClassName "flex bg-gray-200 rounded-lg p-1" ] ]
-            [ categoryButton "開発" Development state.formCategory
-            , categoryButton "一般" General state.formCategory
-            ]
-        , case state.submitError of
-            Just err ->
-              HH.p
-                [ HP.classes [ H.ClassName "text-sm text-red-500" ] ]
-                [ HH.text err ]
-            Nothing -> HH.text ""
-        , HH.div
-            [ HP.classes [ H.ClassName "flex gap-3 justify-end" ] ]
-            [ HH.button
-                [ HE.onClick \_ -> CloseModal
-                , HP.classes [ H.ClassName "px-4 py-2 text-sm text-gray-500 rounded-lg hover:bg-gray-100" ]
-                ]
-                [ HH.text "キャンセル" ]
-            , HH.button
-                [ HE.onClick \_ -> SubmitMemory
-                , HP.disabled state.submitting
-                , HP.classes [ H.ClassName "px-4 py-2 text-sm bg-gray-900 text-white rounded-lg disabled:opacity-50" ]
-                ]
-                [ HH.text if state.submitting then "保存中..." else "保存" ]
-            ]
-        ]
+        if state.submitSuccess then
+          [ HH.p
+              [ HP.classes [ H.ClassName "text-sm text-green-600 text-center py-4" ] ]
+              [ HH.text "保存に成功しました" ]
+          , HH.div
+              [ HP.classes [ H.ClassName "flex justify-end" ] ]
+              [ HH.button
+                  [ HE.onClick \_ -> CloseModal
+                  , HP.classes [ H.ClassName "px-4 py-2 text-sm bg-gray-900 text-white rounded-lg" ]
+                  ]
+                  [ HH.text "閉じる" ]
+              ]
+          ]
+        else
+          [ HH.h2
+              [ HP.classes [ H.ClassName "text-lg font-bold text-gray-900" ] ]
+              [ HH.text "メモリを作成" ]
+          , HH.textarea
+              [ HP.placeholder "内容を入力..."
+              , HP.value state.formContent
+              , HE.onValueInput SetFormContent
+              , HP.classes [ H.ClassName "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none h-32" ]
+              ]
+          , HH.input
+              [ HP.type_ HP.InputText
+              , HP.placeholder "タグ（カンマ区切り）"
+              , HP.value state.formTags
+              , HE.onValueInput SetFormTags
+              , HP.classes [ H.ClassName "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" ]
+              ]
+          , HH.div
+              [ HP.classes [ H.ClassName "flex bg-gray-200 rounded-lg p-1" ] ]
+              [ categoryButton "開発" Development state.formCategory
+              , categoryButton "一般" General state.formCategory
+              ]
+          , case state.submitError of
+              Just err ->
+                HH.p
+                  [ HP.classes [ H.ClassName "text-sm text-red-500" ] ]
+                  [ HH.text err ]
+              Nothing -> HH.text ""
+          , HH.div
+              [ HP.classes [ H.ClassName "flex gap-3 justify-end" ] ]
+              [ HH.button
+                  [ HE.onClick \_ -> CloseModal
+                  , HP.classes [ H.ClassName "px-4 py-2 text-sm text-gray-500 rounded-lg hover:bg-gray-100" ]
+                  ]
+                  [ HH.text "キャンセル" ]
+              , HH.button
+                  [ HE.onClick \_ -> SubmitMemory
+                  , HP.disabled state.submitting
+                  , HP.classes [ H.ClassName "px-4 py-2 text-sm bg-gray-900 text-white rounded-lg disabled:opacity-50" ]
+                  ]
+                  [ HH.text if state.submitting then "保存中..." else "保存" ]
+              ]
+          ]
     ]
 
 categoryButton :: forall slots m. String -> Tab -> Tab -> H.ComponentHTML Action slots m
@@ -269,6 +285,7 @@ handleAction = case _ of
     , formCategory = s.tab
     , submitting = false
     , submitError = Nothing
+    , submitSuccess = false
     }
   CloseModal -> H.modify_ _ { showModal = false }
   SetFormContent v -> H.modify_ _ { formContent = v }
@@ -293,7 +310,7 @@ handleAction = case _ of
       , body
       }
     if response.status == 201 then
-      H.modify_ _ { showModal = false, submitting = false }
+      H.modify_ _ { submitting = false, submitSuccess = true }
     else
       H.modify_ _ { submitting = false, submitError = Just "保存に失敗しました" }
 
