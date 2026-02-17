@@ -18,6 +18,9 @@ import Data.User (UserProfile)
 import Effect.Class (class MonadEffect, liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
+import Unsafe.Coerce (unsafeCoerce)
+import Halogen.HTML.Core as HHC
+import Halogen.VDom.Types (Namespace(..)) as VDom
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as HQE
@@ -133,15 +136,15 @@ header state =
         Just _ ->
           HH.div
             [ HP.classes [ H.ClassName "w-9 h-9 bg-blue-50 rounded-full flex items-center justify-center" ] ]
-            [ HH.element (H.ElemName "svg")
+            [ svgElement (H.ElemName "svg")
                 [ HP.attr (H.AttrName "viewBox") "0 0 24 24"
                 , HP.attr (H.AttrName "fill") "none"
                 , HP.attr (H.AttrName "stroke") "#3b82f6"
                 , HP.attr (H.AttrName "stroke-width") "2"
                 , HP.classes [ H.ClassName "w-5 h-5" ]
                 ]
-                [ HH.element (H.ElemName "circle") [ HP.attr (H.AttrName "cx") "12", HP.attr (H.AttrName "cy") "8", HP.attr (H.AttrName "r") "4" ] []
-                , HH.element (H.ElemName "path") [ HP.attr (H.AttrName "d") "M4 21v-1a6 6 0 0 1 12 0v1" ] []
+                [ svgElement (H.ElemName "circle") [ HP.attr (H.AttrName "cx") "12", HP.attr (H.AttrName "cy") "8", HP.attr (H.AttrName "r") "4" ] []
+                , svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M4 21v-1a6 6 0 0 1 12 0v1" ] []
                 ]
             ]
         Nothing ->
@@ -216,15 +219,15 @@ searchBar state =
         , HP.disabled (state.searching || String.null state.searchQuery)
         , HP.classes [ H.ClassName "w-10 h-10 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-xl disabled:opacity-40 disabled:hover:bg-blue-500" ]
         ]
-        [ HH.element (H.ElemName "svg")
+        [ svgElement (H.ElemName "svg")
             [ HP.attr (H.AttrName "viewBox") "0 0 24 24"
             , HP.attr (H.AttrName "fill") "none"
             , HP.attr (H.AttrName "stroke") "currentColor"
             , HP.attr (H.AttrName "stroke-width") "2.5"
             , HP.classes [ H.ClassName "w-4.5 h-4.5" ]
             ]
-            [ HH.element (H.ElemName "circle") [ HP.attr (H.AttrName "cx") "11", HP.attr (H.AttrName "cy") "11", HP.attr (H.AttrName "r") "7" ] []
-            , HH.element (H.ElemName "path") [ HP.attr (H.AttrName "d") "M21 21l-4.35-4.35" ] []
+            [ svgElement (H.ElemName "circle") [ HP.attr (H.AttrName "cx") "11", HP.attr (H.AttrName "cy") "11", HP.attr (H.AttrName "r") "7" ] []
+            , svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M21 21l-4.35-4.35" ] []
             ]
         ]
     ]
@@ -448,29 +451,32 @@ footer =
         [ HH.text "nesso-pfl" ]
     ]
 
+svgElement :: forall r w i. H.ElemName -> Array (HP.IProp r i) -> Array (HH.HTML w i) -> HH.HTML w i
+svgElement name props children = HHC.element (Just (VDom.Namespace "http://www.w3.org/2000/svg")) name (unsafeCoerce props) children
+
 editIcon :: forall slots m. H.ComponentHTML Action slots m
 editIcon =
-  HH.element (H.ElemName "svg")
+  svgElement (H.ElemName "svg")
     [ HP.attr (H.AttrName "viewBox") "0 0 24 24"
     , HP.attr (H.AttrName "fill") "none"
     , HP.attr (H.AttrName "stroke") "currentColor"
     , HP.attr (H.AttrName "stroke-width") "2"
     , HP.classes [ H.ClassName "w-4 h-4" ]
     ]
-    [ HH.element (H.ElemName "path") [ HP.attr (H.AttrName "d") "M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" ] [] ]
+    [ svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" ] [] ]
 
 trashIcon :: forall slots m. H.ComponentHTML Action slots m
 trashIcon =
-  HH.element (H.ElemName "svg")
+  svgElement (H.ElemName "svg")
     [ HP.attr (H.AttrName "viewBox") "0 0 24 24"
     , HP.attr (H.AttrName "fill") "none"
     , HP.attr (H.AttrName "stroke") "currentColor"
     , HP.attr (H.AttrName "stroke-width") "2"
     , HP.classes [ H.ClassName "w-4 h-4" ]
     ]
-    [ HH.element (H.ElemName "path") [ HP.attr (H.AttrName "d") "M3 6h18" ] []
-    , HH.element (H.ElemName "path") [ HP.attr (H.AttrName "d") "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" ] []
-    , HH.element (H.ElemName "path") [ HP.attr (H.AttrName "d") "M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" ] []
+    [ svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M3 6h18" ] []
+    , svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" ] []
+    , svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" ] []
     ]
 
 handleAction :: forall slots o m. MonadEffect m => MonadUser m => MonadMemory m => Navigate m => Action -> H.HalogenM State Action slots o m Unit
