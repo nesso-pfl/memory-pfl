@@ -42,6 +42,7 @@ pub struct CreateMemory {
     pub category: Category,
 }
 
+#[derive(Deserialize)]
 pub struct UpdateMemory {
     pub content: Option<String>,
     pub tags: Option<Vec<String>>,

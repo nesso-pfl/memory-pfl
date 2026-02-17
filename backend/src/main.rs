@@ -15,7 +15,7 @@ mod model;
 mod repository;
 
 use embedding::GeminiClient;
-use model::CreateMemory;
+use model::{CreateMemory, UpdateMemory};
 use repository::sqlite::SqliteMemoryRepository;
 
 #[derive(Embed)]
@@ -100,6 +100,22 @@ async fn create_memory(
     }
 }
 
+async fn update_memory(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    Json(input): Json<UpdateMemory>,
+) -> Response {
+    use repository::MemoryRepository;
+    match state.repo.update(&id, input).await {
+        Ok(memory) => Json(memory).into_response(),
+        Err(repository::RepositoryError::NotFound) => StatusCode::NOT_FOUND.into_response(),
+        Err(e) => {
+            eprintln!("update_memory error: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
+    }
+}
+
 #[derive(Deserialize)]
 struct SearchQuery {
     q: String,
@@ -148,7 +164,7 @@ async fn main() {
     let app = Router::new()
         .route("/memories", get(list_memories).post(create_memory))
         .route("/memories/search", get(search_memories))
-        .route("/memories/{id}", get(get_memory))
+        .route("/memories/{id}", get(get_memory).put(update_memory))
         .fallback(get(static_handler))
         .with_state(state);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
