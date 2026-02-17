@@ -37,5 +37,6 @@ pub trait MemoryRepository: Send + Sync {
         &self,
         query_embedding: Vec<f32>,
         limit: usize,
+        category: Option<Category>,
     ) -> impl Future<Output = Result<Vec<Memory>, RepositoryError>> + Send;
 }

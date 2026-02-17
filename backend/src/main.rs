@@ -104,7 +104,7 @@ async fn list_memories(
         }
     };
 
-    match state.repo.search(embedding, 20).await {
+    match state.repo.search(embedding, 20, params.category).await {
         Ok(memories) => Json(memories).into_response(),
         Err(e) => {
             eprintln!("search_memories error: {e}");

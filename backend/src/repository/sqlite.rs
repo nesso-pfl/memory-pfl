@@ -254,12 +254,18 @@ impl MemoryRepository for SqliteMemoryRepository {
         &self,
         query_embedding: Vec<f32>,
         limit: usize,
+        category: Option<Category>,
     ) -> Result<Vec<Memory>, RepositoryError> {
         let embedding_bytes: Vec<u8> =
             query_embedding.iter().flat_map(|f| f.to_le_bytes()).collect();
         let limit = limit as i64;
 
-        let rows: Vec<MemoryRow> = sqlx::query_as(
+        let cat_filter = if category.is_some() {
+            " AND m.category = ?"
+        } else {
+            ""
+        };
+        let sql = format!(
             "WITH ranked AS (
                SELECT v.id, v.distance
                FROM vec_memories v
@@ -269,15 +275,22 @@ impl MemoryRepository for SqliteMemoryRepository {
              SELECT m.id, m.content, m.tags, m.category, m.created_at, m.updated_at
              FROM memories m
              INNER JOIN ranked r ON m.id = r.id
-             WHERE r.distance < ?
-             ORDER BY r.distance",
-        )
-        .bind(&embedding_bytes)
-        .bind(limit)
-        .bind(Self::SEARCH_DISTANCE_THRESHOLD)
-        .fetch_all(&self.pool)
-        .await
-        .map_err(|e| RepositoryError::Internal(e.into()))?;
+             WHERE r.distance < ?{cat_filter}
+             ORDER BY r.distance"
+        );
+
+        let mut query = sqlx::query_as::<_, MemoryRow>(&sql)
+            .bind(&embedding_bytes)
+            .bind(limit)
+            .bind(Self::SEARCH_DISTANCE_THRESHOLD);
+        if let Some(ref cat) = category {
+            query = query.bind(cat.as_str());
+        }
+
+        let rows: Vec<MemoryRow> = query
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| RepositoryError::Internal(e.into()))?;
 
         rows.into_iter().map(TryInto::try_into).collect()
     }

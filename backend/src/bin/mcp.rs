@@ -1,4 +1,5 @@
 use backend::embedding::GeminiClient;
+use backend::model::Category;
 use backend::repository::MemoryRepository;
 use backend::repository::sqlite::SqliteMemoryRepository;
 use rmcp::handler::server::router::tool::ToolRouter;
@@ -38,7 +39,7 @@ impl MemoryServer {
 
     #[tool(description = "List all memories")]
     async fn list_memories(&self) -> String {
-        match self.repo.list(None, None, 100, 0).await {
+        match self.repo.list(Some(Category::Development), None, 100, 0).await {
             Ok(memories) => serde_json::to_string(&memories).unwrap_or_default(),
             Err(e) => format!("Error: {e}"),
         }
@@ -58,7 +59,7 @@ impl MemoryServer {
             Ok(v) => v,
             Err(e) => return format!("Error: {e}"),
         };
-        match self.repo.search(embedding, 20).await {
+        match self.repo.search(embedding, 20, Some(Category::Development)).await {
             Ok(memories) => serde_json::to_string(&memories).unwrap_or_default(),
             Err(e) => format!("Error: {e}"),
         }
