@@ -2,15 +2,16 @@ module Component.Router where
 
 import Prelude
 
-import Capability.Memory (class MonadMemory, createMemory, listMemories)
+import Capability.Memory (class MonadMemory, createMemory, listMemories, listTags)
 import Capability.Navigate (class Navigate, replaceRoute)
 import Capability.User (class MonadUser, getProfile)
-import Data.Array (filter) as Array
+import Data.Array (filter, null) as Array
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Memory (Memory)
 import Data.Route (Route(..))
-import Data.String.Common (split, trim, null) as String
+import Data.String.CodeUnits (contains) as String
+import Data.String.Common (split, trim, null, toLower) as String
 import Data.String.Pattern (Pattern(..))
 import Data.Tab (Tab(..), fromCategory, toCategory)
 import Data.User (UserProfile, displayName)
@@ -24,6 +25,8 @@ type State =
   , tab :: Tab
   , profile :: Maybe UserProfile
   , memories :: Array Memory
+  , allTags :: Array String
+  , tagInput :: String
   , filterTag :: Maybe String
   , showModal :: Boolean
   , formContent :: String
@@ -40,7 +43,9 @@ data Action
   = Initialize
   | FetchMemories
   | SetTab Tab
-  | ToggleTag String
+  | SetTagInput String
+  | SelectTag String
+  | ClearTag
   | OpenModal
   | CloseModal
   | SetFormContent String
@@ -55,6 +60,8 @@ component = H.mkComponent
       , tab: Development
       , profile: Nothing
       , memories: []
+      , allTags: []
+      , tagInput: ""
       , filterTag: Nothing
       , showModal: false
       , formContent: ""
@@ -111,22 +118,45 @@ main :: forall slots m. State -> H.ComponentHTML Action slots m
 main state =
   HH.main
     [ HP.classes [ H.ClassName "flex-1 flex flex-col" ] ]
-    ( [ searchBar
+    ( [ tagSearch state
       , tabControl state
       , resultList state
       ] <> if isJust state.profile then [ fab ] else []
     )
 
-searchBar :: forall slots m. H.ComponentHTML Action slots m
-searchBar =
+tagSearch :: forall slots m. State -> H.ComponentHTML Action slots m
+tagSearch state =
   HH.div
-    [ HP.classes [ H.ClassName "px-4 pt-4" ] ]
-    [ HH.input
-        [ HP.type_ HP.InputText
-        , HP.placeholder "\x1F50D 検索..."
-        , HP.classes [ H.ClassName "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" ]
-        ]
-    ]
+    [ HP.classes [ H.ClassName "px-4 pt-4 relative" ] ]
+    ( [ HH.input
+          [ HP.type_ HP.InputText
+          , HP.placeholder "\x1F50D タグで検索..."
+          , HP.value state.tagInput
+          , HE.onValueInput SetTagInput
+          , HP.classes [ H.ClassName "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" ]
+          ]
+      ] <> suggestions
+    )
+  where
+  suggestions
+    | String.null state.tagInput = []
+    | otherwise =
+        let
+          input = String.toLower state.tagInput
+          matched = Array.filter (\t -> String.contains (Pattern input) (String.toLower t)) state.allTags
+        in
+          if Array.null matched then []
+          else
+            [ HH.div
+                [ HP.classes [ H.ClassName "absolute left-4 right-4 mt-1 bg-white border rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto" ] ]
+                (map suggestionItem matched)
+            ]
+  suggestionItem t =
+    HH.button
+      [ HE.onClick \_ -> SelectTag t
+      , HP.classes [ H.ClassName "w-full text-left px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer" ]
+      ]
+      [ HH.text t ]
 
 tabControl :: forall slots m. State -> H.ComponentHTML Action slots m
 tabControl state =
@@ -165,7 +195,7 @@ resultList state =
               [ HP.classes [ H.ClassName "text-xs text-gray-500" ] ]
               [ HH.text "タグ:" ]
           , HH.button
-              [ HE.onClick \_ -> ToggleTag t
+              [ HE.onClick \_ -> ClearTag
               , HP.classes [ H.ClassName "text-xs bg-gray-900 text-white px-2 py-0.5 rounded cursor-pointer inline-flex items-center gap-1" ]
               ]
               [ HH.text t, HH.text " \x2715" ]
@@ -195,7 +225,7 @@ memoryCard activeTag mem =
 tagBadge :: forall slots m. Maybe String -> String -> H.ComponentHTML Action slots m
 tagBadge activeTag t =
   HH.button
-    [ HE.onClick \_ -> ToggleTag t
+    [ HE.onClick \_ -> SelectTag t
     , HP.classes [ H.ClassName classes ]
     ]
     [ HH.text t ]
@@ -319,10 +349,13 @@ handleAction = case _ of
       Left _ -> pure unit
   SetTab tab ->
     replaceRoute (Home (Just (toCategory tab)))
-  ToggleTag t -> do
-    current <- H.gets _.filterTag
-    let next = if current == Just t then Nothing else Just t
-    H.modify_ _ { filterTag = next }
+  SetTagInput v ->
+    H.modify_ _ { tagInput = v }
+  SelectTag t -> do
+    H.modify_ _ { filterTag = Just t, tagInput = "" }
+    handleAction FetchMemories
+  ClearTag -> do
+    H.modify_ _ { filterTag = Nothing }
     handleAction FetchMemories
   OpenModal -> H.modify_ \s -> s
     { showModal = true
@@ -347,6 +380,11 @@ handleAction = case _ of
     case result of
       Right _ -> do
         H.modify_ _ { submitting = false, submitSuccess = true }
+        tab <- H.gets _.tab
+        tagsResult <- listTags (Just (toCategory tab))
+        case tagsResult of
+          Right tags -> H.modify_ _ { allTags = tags }
+          Left _ -> pure unit
         handleAction FetchMemories
       Left err -> H.modify_ _ { submitting = false, submitError = Just err }
 
@@ -354,6 +392,10 @@ handleQuery :: forall slots o m a. MonadUser m => MonadMemory m => Navigate m =>
 handleQuery (Navigate route a) = do
   let tab = case route of
         Home maybeTab -> fromMaybe Development (maybeTab >>= fromCategory)
-  H.modify_ _ { route = Just route, tab = tab, filterTag = Nothing }
+  H.modify_ _ { route = Just route, tab = tab, filterTag = Nothing, tagInput = "" }
+  tagsResult <- listTags (Just (toCategory tab))
+  case tagsResult of
+    Right tags -> H.modify_ _ { allTags = tags }
+    Left _ -> pure unit
   handleAction FetchMemories
   pure (Just a)

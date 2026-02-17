@@ -45,4 +45,5 @@ instance MonadUser AppM where
 
 instance MonadMemory AppM where
   listMemories = liftAff <<< Memory.listMemories
+  listTags = liftAff <<< Memory.listTags
   createMemory = liftAff <<< Memory.createMemory

@@ -49,6 +49,20 @@ listMemories params = do
   else
     pure (Left "メモリの取得に失敗しました")
 
+listTags :: Maybe String -> Aff (Either String (Array String))
+listTags category = do
+  let qs = case category of
+        Just c -> "?category=" <> c
+        Nothing -> ""
+  response <- fetch ("/memories/tags" <> qs) {}
+  if response.status == 200 then do
+    raw <- response.json
+    case decodeJson (unsafeCoerce raw) of
+      Right tags -> pure (Right tags)
+      Left err -> pure (Left (show err))
+  else
+    pure (Left "タグの取得に失敗しました")
+
 createMemory :: CreateMemory -> Aff (Either String Unit)
 createMemory mem = do
   let
