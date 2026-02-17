@@ -155,6 +155,8 @@ async fn search_memories(
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt::init();
+
     unsafe {
         libsqlite3_sys::sqlite3_auto_extension(Some(std::mem::transmute(
             sqlite_vec::sqlite3_vec_init as *const (),
