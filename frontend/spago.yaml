@@ -2,9 +2,11 @@ package:
   name: frontend
   dependencies:
     - aff
+    - argonaut-codecs
     - console
     - effect
     - either
+    - fetch
     - foreign
     - halogen
     - maybe

@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use auth::{AuthConfig, AuthState, Claims, roles::MemoryPflApiRole};
+use auth::{AuthConfig, AuthState, Claims, UserProfile, roles::MemoryPflApiRole};
 use axum::{
-    Json, Router,
+    Extension, Json, Router,
     extract::{FromRequestParts, Path, Query, State},
     http::{StatusCode, header, request::Parts},
     response::{IntoResponse, Response},
@@ -158,6 +158,10 @@ struct SearchQuery {
     q: String,
 }
 
+async fn me_handler(Extension(profile): Extension<UserProfile>) -> Json<UserProfile> {
+    Json(profile)
+}
+
 async fn search_memories(
     _: RequireRead,
     State(state): State<AppState>,
@@ -219,6 +223,7 @@ async fn main() {
         .route("/memories", get(list_memories).post(create_memory))
         .route("/memories/search", get(search_memories))
         .route("/memories/{id}", get(get_memory).put(update_memory).delete(delete_memory))
+        .route("/auth/me", get(me_handler))
         .layer(axum::middleware::from_fn_with_state(
             auth_state.clone(),
             auth::auth_middleware,

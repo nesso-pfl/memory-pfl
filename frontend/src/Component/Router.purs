@@ -2,27 +2,33 @@ module Component.Router where
 
 import Prelude
 
+import Data.Argonaut.Decode.Class (decodeJson)
+import Data.Argonaut.Parser (jsonParser)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Route (Route(..))
 import Data.Tab (Tab(..))
+import Data.UserProfile (UserProfile)
+import Fetch (fetch)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Effect.Aff.Class (class MonadAff)
 
 type State =
   { route :: Maybe Route
   , tab :: Tab
-  , isLoggedIn :: Boolean
+  , profile :: Maybe UserProfile
   }
 
 data Query a = Navigate Route a
 
 data Action = Initialize | SetTab Tab
 
-component :: forall i o m. H.Component Query i o m
+component :: forall i o m. MonadAff m => H.Component Query i o m
 component = H.mkComponent
-  { initialState: \_ -> { route: Nothing, tab: Development, isLoggedIn: false }
+  { initialState: \_ -> { route: Nothing, tab: Development, profile: Nothing }
   , render
   , eval: H.mkEval $ H.defaultEval
       { handleQuery = handleQuery
@@ -52,13 +58,17 @@ header state =
         , HP.classes [ H.ClassName "text-lg font-bold text-gray-900 no-underline" ]
         ]
         [ HH.text "memory-pfl" ]
-    , if state.isLoggedIn
-        then HH.span [ HP.classes [ H.ClassName "text-sm text-gray-500" ] ] [ HH.text "ログイン済" ]
-        else HH.a
-          [ HP.href "/auth/login"
-          , HP.classes [ H.ClassName "text-sm bg-gray-900 text-white px-3 py-1.5 rounded no-underline" ]
-          ]
-          [ HH.text "Login" ]
+    , case state.profile of
+        Just p ->
+          HH.span
+            [ HP.classes [ H.ClassName "text-sm text-gray-500" ] ]
+            [ HH.text (displayName p) ]
+        Nothing ->
+          HH.a
+            [ HP.href "/auth/login"
+            , HP.classes [ H.ClassName "text-sm bg-gray-900 text-white px-3 py-1.5 rounded no-underline" ]
+            ]
+            [ HH.text "Login" ]
     ]
 
 main :: forall slots m. State -> H.ComponentHTML Action slots m
@@ -120,6 +130,13 @@ fab =
     [ HP.classes [ H.ClassName "fixed bottom-6 right-6 w-14 h-14 bg-gray-900 text-white rounded-full shadow-lg text-2xl flex items-center justify-center" ] ]
     [ HH.text "＋" ]
 
+displayName :: UserProfile -> String
+displayName p = case p.preferred_username of
+  Just name -> name
+  Nothing -> case p.name of
+    Just name -> name
+    Nothing -> p.sub
+
 footer :: forall slots m. H.ComponentHTML Action slots m
 footer =
   HH.footer
@@ -133,9 +150,17 @@ footer =
         [ HH.text "nesso-pfl" ]
     ]
 
-handleAction :: forall slots o m. Action -> H.HalogenM State Action slots o m Unit
+handleAction :: forall slots o m. MonadAff m => Action -> H.HalogenM State Action slots o m Unit
 handleAction = case _ of
-  Initialize -> pure unit
+  Initialize -> do
+    response <- H.liftAff $ fetch "/auth/me" {}
+    when (response.status == 200) do
+      text <- H.liftAff response.text
+      case jsonParser text of
+        Right json -> case decodeJson json of
+          Right p -> H.modify_ _ { profile = Just p }
+          Left _ -> pure unit
+        Left _ -> pure unit
   SetTab tab -> H.modify_ _ { tab = tab }
 
 handleQuery :: forall action slots o m a. Query a -> H.HalogenM State action slots o m (Maybe a)
