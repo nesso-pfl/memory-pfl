@@ -50,6 +50,8 @@ pub struct SqliteMemoryRepository {
 }
 
 impl SqliteMemoryRepository {
+    const SEARCH_DISTANCE_THRESHOLD: f64 = 0.5;
+
     pub async fn new(url: &str) -> Result<Self, RepositoryError> {
         let pool = SqlitePool::connect(url)
             .await
@@ -72,7 +74,7 @@ impl SqliteMemoryRepository {
         sqlx::query(
             "CREATE VIRTUAL TABLE IF NOT EXISTS vec_memories USING vec0(
                 id TEXT PRIMARY KEY,
-                embedding float[768]
+                embedding float[768] distance_metric=cosine
             )",
         )
         .execute(&pool)
@@ -258,16 +260,21 @@ impl MemoryRepository for SqliteMemoryRepository {
         let limit = limit as i64;
 
         let rows: Vec<MemoryRow> = sqlx::query_as(
-            "SELECT m.id, m.content, m.tags, m.category, m.created_at, m.updated_at
+            "WITH ranked AS (
+               SELECT v.id, v.distance
+               FROM vec_memories v
+               WHERE v.embedding MATCH ?
+                 AND k = ?
+             )
+             SELECT m.id, m.content, m.tags, m.category, m.created_at, m.updated_at
              FROM memories m
-             INNER JOIN vec_memories v ON m.id = v.id
-             WHERE v.embedding MATCH ?
-               AND k = ?
-             ORDER BY distance",
+             INNER JOIN ranked r ON m.id = r.id
+             WHERE r.distance < ?
+             ORDER BY r.distance",
         )
         .bind(&embedding_bytes)
         .bind(limit)
-        .bind(limit)
+        .bind(Self::SEARCH_DISTANCE_THRESHOLD)
         .fetch_all(&self.pool)
         .await
         .map_err(|e| RepositoryError::Internal(e.into()))?;

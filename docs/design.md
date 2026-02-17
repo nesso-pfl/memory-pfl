@@ -21,7 +21,7 @@ MCP Server (読み取り専用)
 ## ストレージ
 
 - **SQLite** をメインデータベースとして採用
-- **Embedding index** によりセマンティック検索を実現
+- **Embedding index** によりセマンティック検索を実現（詳細: [semantic-search.md](semantic-search.md)）
 - 将来的に **pgvector** への移行を検討
 
 ## メモリモデル
