@@ -77,12 +77,35 @@ impl<S: Send + Sync> FromRequestParts<S> for RequireWrite {
     }
 }
 
-async fn list_memories(_: RequireRead, State(state): State<AppState>) -> Response {
+async fn list_memories(
+    _: RequireRead,
+    State(state): State<AppState>,
+    Query(params): Query<SearchQuery>,
+) -> Response {
     use repository::MemoryRepository;
-    match state.repo.list().await {
+
+    if params.q.is_empty() {
+        return match state.repo.list().await {
+            Ok(memories) => Json(memories).into_response(),
+            Err(e) => {
+                eprintln!("list_memories error: {e}");
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            }
+        };
+    }
+
+    let embedding = match state.gemini.embed(&params.q, "RETRIEVAL_QUERY").await {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("embedding error: {e}");
+            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        }
+    };
+
+    match state.repo.search(embedding, 20).await {
         Ok(memories) => Json(memories).into_response(),
         Err(e) => {
-            eprintln!("list_memories error: {e}");
+            eprintln!("search_memories error: {e}");
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
     }
@@ -155,35 +178,12 @@ async fn delete_memory(_: RequireWrite, State(state): State<AppState>, Path(id):
 
 #[derive(Deserialize)]
 struct SearchQuery {
+    #[serde(default)]
     q: String,
 }
 
 async fn me_handler(Extension(profile): Extension<UserProfile>) -> Json<UserProfile> {
     Json(profile)
-}
-
-async fn search_memories(
-    _: RequireRead,
-    State(state): State<AppState>,
-    Query(params): Query<SearchQuery>,
-) -> Response {
-    use repository::MemoryRepository;
-
-    let embedding = match state.gemini.embed(&params.q, "RETRIEVAL_QUERY").await {
-        Ok(v) => v,
-        Err(e) => {
-            eprintln!("embedding error: {e}");
-            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
-        }
-    };
-
-    match state.repo.search(embedding, 20).await {
-        Ok(memories) => Json(memories).into_response(),
-        Err(e) => {
-            eprintln!("search_memories error: {e}");
-            StatusCode::INTERNAL_SERVER_ERROR.into_response()
-        }
-    }
 }
 
 #[tokio::main]
@@ -221,7 +221,6 @@ async fn main() {
 
     let api = Router::new()
         .route("/memories", get(list_memories).post(create_memory))
-        .route("/memories/search", get(search_memories))
         .route("/memories/{id}", get(get_memory).put(update_memory).delete(delete_memory))
         .route("/auth/me", get(me_handler))
         .layer(axum::middleware::from_fn_with_state(
