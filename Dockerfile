@@ -11,6 +11,7 @@ RUN npm run build
 FROM rust:1-bookworm AS backend-build
 WORKDIR /app/backend
 COPY backend/ .
+COPY auth-pfl/crates/auth/ ../auth-pfl/crates/auth/
 COPY --from=frontend-build /app/frontend/dist/ ../frontend/dist/
 RUN cargo build --release
 

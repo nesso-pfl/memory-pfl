@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use auth::{AuthConfig, AuthState};
 use axum::{
     Json, Router,
     extract::{Path, Query, State},
@@ -169,12 +170,35 @@ async fn main() {
 
     let state: AppState = Arc::new(AppStateInner { repo, gemini });
 
-    let app = Router::new()
+    let env = |key: &str| std::env::var(key).unwrap_or_else(|_| panic!("{key} must be set"));
+    let auth_config = AuthConfig::builder()
+        .issuer_url(env("AUTH_ISSUER_URL"))
+        .client_id(env("AUTH_CLIENT_ID"))
+        .client_secret(env("AUTH_CLIENT_SECRET"))
+        .redirect_uri(env("AUTH_REDIRECT_URI"))
+        .post_logout_uri(env("AUTH_POST_LOGOUT_URI"))
+        .redis_url(env("AUTH_REDIS_URL"))
+        .build()
+        .expect("invalid auth config");
+    let auth_state = AuthState::new(auth_config)
+        .await
+        .expect("failed to initialize auth");
+
+    let api = Router::new()
         .route("/memories", get(list_memories).post(create_memory))
         .route("/memories/search", get(search_memories))
         .route("/memories/{id}", get(get_memory).put(update_memory).delete(delete_memory))
-        .fallback(get(static_handler))
+        .layer(axum::middleware::from_fn_with_state(
+            auth_state.clone(),
+            auth::auth_middleware,
+        ))
         .with_state(state);
+
+    let app = Router::new()
+        .merge(api)
+        .merge(auth::auth_routes(auth_state))
+        .fallback(get(static_handler));
+
     let port = std::env::var("PORT").expect("PORT must be set");
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await.unwrap();
     axum::serve(listener, app).await.unwrap();
