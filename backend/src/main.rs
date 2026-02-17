@@ -80,12 +80,13 @@ impl<S: Send + Sync> FromRequestParts<S> for RequireWrite {
 async fn list_memories(
     _: RequireRead,
     State(state): State<AppState>,
-    Query(params): Query<SearchQuery>,
+    Query(params): Query<ListQuery>,
 ) -> Response {
     use repository::MemoryRepository;
 
     if params.q.is_empty() {
-        return match state.repo.list().await {
+        let limit = params.limit.min(200);
+        return match state.repo.list(limit).await {
             Ok(memories) => Json(memories).into_response(),
             Err(e) => {
                 eprintln!("list_memories error: {e}");
@@ -177,9 +178,15 @@ async fn delete_memory(_: RequireWrite, State(state): State<AppState>, Path(id):
 }
 
 #[derive(Deserialize)]
-struct SearchQuery {
+struct ListQuery {
     #[serde(default)]
     q: String,
+    #[serde(default = "default_limit")]
+    limit: usize,
+}
+
+fn default_limit() -> usize {
+    100
 }
 
 async fn me_handler(Extension(profile): Extension<UserProfile>) -> Json<UserProfile> {
