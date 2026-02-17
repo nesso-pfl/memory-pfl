@@ -4,7 +4,7 @@ import Prelude
 
 import Control.Monad.Trans.Class (lift)
 import Data.Maybe (Maybe)
-import Data.UserProfile (UserProfile)
+import Data.User (UserProfile)
 import Halogen (HalogenM)
 
 class Monad m <= MonadUser m where

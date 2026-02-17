@@ -2,7 +2,8 @@ module AppM where
 
 import Prelude
 
-import Capability.Memory (class MonadMemory, CreateMemory)
+import Capability.Memory (class MonadMemory)
+import Data.Memory (CreateMemory)
 import Capability.Navigate (class Navigate)
 import Capability.User (class MonadUser)
 import Control.Monad.Reader (class MonadAsk, ReaderT, ask, runReaderT)

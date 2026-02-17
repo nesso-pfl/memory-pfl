@@ -11,7 +11,7 @@ import Data.Route (Route(..))
 import Data.String.Common (split, trim, null) as String
 import Data.String.Pattern (Pattern(..))
 import Data.Tab (Tab(..))
-import Data.UserProfile (UserProfile)
+import Data.User (UserProfile, displayName)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -240,13 +240,6 @@ categoryButton label cat activeCat =
   classes
     | cat == activeCat = "flex-1 text-sm py-1.5 rounded-md font-medium bg-white shadow"
     | otherwise = "flex-1 text-sm py-1.5 rounded-md font-medium text-gray-500"
-
-displayName :: UserProfile -> String
-displayName p = case p.preferred_username of
-  Just name -> name
-  Nothing -> case p.name of
-    Just name -> name
-    Nothing -> p.sub
 
 footer :: forall slots m. H.ComponentHTML Action slots m
 footer =
