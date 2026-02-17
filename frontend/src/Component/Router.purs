@@ -115,10 +115,10 @@ render state = case state.route of
 header :: forall slots m. State -> H.ComponentHTML Action slots m
 header state =
   HH.header
-    [ HP.classes [ H.ClassName "sticky top-0 z-10 bg-white border-b px-4 py-3 flex items-center justify-between" ] ]
+    [ HP.classes [ H.ClassName "sticky top-0 z-10 bg-white/80 backdrop-blur-md shadow-sm px-5 py-3.5 flex items-center justify-between" ] ]
     [ HH.a
         [ HP.href "/"
-        , HP.classes [ H.ClassName "text-lg font-bold text-gray-900 no-underline" ]
+        , HP.classes [ H.ClassName "text-lg font-bold tracking-tight text-gray-900 no-underline" ]
         ]
         [ HH.text "memory-pfl" ]
     , case state.profile of
@@ -129,7 +129,7 @@ header state =
         Nothing ->
           HH.a
             [ HP.href "/auth/login"
-            , HP.classes [ H.ClassName "text-sm bg-gray-900 text-white px-3 py-1.5 rounded no-underline" ]
+            , HP.classes [ H.ClassName "text-sm bg-gray-800 hover:bg-gray-700 text-white px-3.5 py-1.5 rounded-lg no-underline" ]
             ]
             [ HH.text "Login" ]
     ]
@@ -149,7 +149,7 @@ tagSearch :: forall slots m. State -> H.ComponentHTML Action slots m
 tagSearch state =
   HH.div
     [ HP.ref (H.RefLabel "tagSearch")
-    , HP.classes [ H.ClassName "px-4 pt-4 relative" ]
+    , HP.classes [ H.ClassName "px-5 pt-3 relative" ]
     ]
     ( [ HH.input
           [ HP.type_ HP.InputText
@@ -157,7 +157,7 @@ tagSearch state =
           , HP.value state.tagInput
           , HE.onValueInput SetTagInput
           , HE.onFocusIn \_ -> TagFocus
-          , HP.classes [ H.ClassName "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" ]
+          , HP.classes [ H.ClassName "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" ]
           ]
       ] <> suggestions
     )
@@ -172,31 +172,31 @@ tagSearch state =
     | Array.null matched = []
     | otherwise =
         [ HH.div
-            [ HP.classes [ H.ClassName "absolute left-4 right-4 mt-1 bg-white border rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto" ] ]
+            [ HP.classes [ H.ClassName "absolute left-5 right-5 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg z-20 max-h-48 overflow-y-auto py-1" ] ]
             (map suggestionItem matched)
         ]
   suggestionItem t =
     HH.button
       [ HE.onClick \_ -> SelectTag t
-      , HP.classes [ H.ClassName "w-full text-left px-3 py-2 text-sm hover:bg-gray-100" ]
+      , HP.classes [ H.ClassName "w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700" ]
       ]
       [ HH.text t ]
 
 searchBar :: forall slots m. State -> H.ComponentHTML Action slots m
 searchBar state =
   HH.div
-    [ HP.classes [ H.ClassName "px-4 pt-2 flex gap-2" ] ]
+    [ HP.classes [ H.ClassName "px-5 pt-2 flex gap-2" ] ]
     [ HH.input
         [ HP.type_ HP.InputText
         , HP.placeholder "\x1F50D キーワード検索..."
         , HP.value state.searchQuery
         , HE.onValueInput SetSearchQuery
-        , HP.classes [ H.ClassName "flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" ]
+        , HP.classes [ H.ClassName "flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" ]
         ]
     , HH.button
         [ HE.onClick \_ -> SubmitSearch
         , HP.disabled (state.searching || String.null state.searchQuery)
-        , HP.classes [ H.ClassName "px-3 py-2 text-sm bg-gray-900 text-white rounded-lg disabled:opacity-50" ]
+        , HP.classes [ H.ClassName "px-4 py-2.5 text-sm font-medium bg-gray-800 hover:bg-gray-700 text-white rounded-xl disabled:opacity-40 disabled:hover:bg-gray-800" ]
         ]
         [ HH.text if state.searching then "検索中..." else "検索" ]
     ]
@@ -204,9 +204,9 @@ searchBar state =
 tabControl :: forall slots m. State -> H.ComponentHTML Action slots m
 tabControl state =
   HH.div
-    [ HP.classes [ H.ClassName "px-4 pt-3 pb-2" ] ]
+    [ HP.classes [ H.ClassName "px-5 pt-4 pb-1" ] ]
     [ HH.div
-        [ HP.classes [ H.ClassName "flex bg-gray-200 rounded-lg p-1" ] ]
+        [ HP.classes [ H.ClassName "flex bg-gray-100 rounded-xl p-1 gap-1" ] ]
         [ tabButton "開発" Development state.tab
         , tabButton "一般" General state.tab
         ]
@@ -221,13 +221,13 @@ tabButton label tab activeTab =
     [ HH.text label ]
   where
   classes
-    | tab == activeTab = "flex-1 text-sm py-1.5 rounded-md font-medium bg-white shadow"
-    | otherwise = "flex-1 text-sm py-1.5 rounded-md font-medium text-gray-500"
+    | tab == activeTab = "flex-1 text-sm py-2 rounded-lg font-semibold bg-white shadow-sm text-gray-900"
+    | otherwise = "flex-1 text-sm py-2 rounded-lg font-medium text-gray-400 hover:text-gray-600"
 
 resultList :: forall slots m. State -> H.ComponentHTML Action slots m
 resultList state =
   HH.div
-    [ HP.classes [ H.ClassName "flex-1 px-4 py-4 flex flex-col gap-3" ] ]
+    [ HP.classes [ H.ClassName "flex-1 px-5 py-4 flex flex-col gap-3" ] ]
     ( filterBadge <> content )
   where
   filterBadge = case state.filterTag of
@@ -235,11 +235,11 @@ resultList state =
       [ HH.div
           [ HP.classes [ H.ClassName "flex items-center gap-2" ] ]
           [ HH.span
-              [ HP.classes [ H.ClassName "text-xs text-gray-500" ] ]
+              [ HP.classes [ H.ClassName "text-xs text-gray-400" ] ]
               [ HH.text "タグ:" ]
           , HH.button
               [ HE.onClick \_ -> ClearTag
-              , HP.classes [ H.ClassName "text-xs bg-gray-900 text-white px-2 py-0.5 rounded inline-flex items-center gap-1" ]
+              , HP.classes [ H.ClassName "text-xs bg-gray-800 text-white pl-2.5 pr-2 py-1 rounded-full inline-flex items-center gap-1 hover:bg-gray-700" ]
               ]
               [ HH.text t, HH.text " \x2715" ]
           ]
@@ -248,7 +248,7 @@ resultList state =
   content
     | state.memories == [] =
         [ HH.p
-            [ HP.classes [ H.ClassName "text-sm text-gray-400 text-center mt-8" ] ]
+            [ HP.classes [ H.ClassName "text-sm text-gray-400 text-center mt-12" ] ]
             [ HH.text "検索結果がありません" ]
         ]
     | otherwise = map (memoryCard state.filterTag) state.memories
@@ -256,12 +256,12 @@ resultList state =
 memoryCard :: forall slots m. Maybe String -> Memory -> H.ComponentHTML Action slots m
 memoryCard activeTag mem =
   HH.div
-    [ HP.classes [ H.ClassName "bg-white rounded-lg border p-4 flex flex-col gap-2" ] ]
+    [ HP.classes [ H.ClassName "bg-white rounded-xl shadow-sm hover:shadow-md p-5 flex flex-col gap-3" ] ]
     [ HH.p
-        [ HP.classes [ H.ClassName "text-sm text-gray-900 whitespace-pre-wrap" ] ]
+        [ HP.classes [ H.ClassName "text-sm leading-relaxed text-gray-800 whitespace-pre-wrap" ] ]
         [ HH.text mem.content ]
     , HH.div
-        [ HP.classes [ H.ClassName "flex gap-2 flex-wrap" ] ]
+        [ HP.classes [ H.ClassName "flex gap-1.5 flex-wrap" ] ]
         (map (tagBadge activeTag) mem.tags)
     ]
 
@@ -274,37 +274,37 @@ tagBadge activeTag t =
     [ HH.text t ]
   where
   classes
-    | activeTag == Just t = "text-xs bg-gray-900 text-white px-2 py-0.5 rounded"
-    | otherwise = "text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded hover:bg-gray-200"
+    | activeTag == Just t = "text-xs font-medium bg-gray-800 text-white px-2.5 py-1 rounded-full"
+    | otherwise = "text-xs font-medium bg-gray-100 text-gray-500 px-2.5 py-1 rounded-full hover:bg-gray-200 hover:text-gray-700"
 
 fab :: forall slots m. H.ComponentHTML Action slots m
 fab =
   HH.button
     [ HE.onClick \_ -> OpenModal
-    , HP.classes [ H.ClassName "fixed bottom-6 right-6 w-14 h-14 bg-gray-900 text-white rounded-full shadow-lg text-2xl flex items-center justify-center" ]
+    , HP.classes [ H.ClassName "fixed bottom-6 right-6 w-14 h-14 bg-gray-800 hover:bg-gray-700 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 text-2xl flex items-center justify-center" ]
     ]
     [ HH.text "＋" ]
 
 modal :: forall slots m. State -> H.ComponentHTML Action slots m
 modal state =
   HH.div
-    [ HP.classes [ H.ClassName "fixed inset-0 z-50 flex items-center justify-center" ] ]
+    [ HP.classes [ H.ClassName "fixed inset-0 z-50 flex items-end sm:items-center justify-center" ] ]
     [ HH.div
         [ HE.onClick \_ -> CloseModal
-        , HP.classes [ H.ClassName "absolute inset-0 bg-black/50" ]
+        , HP.classes [ H.ClassName "absolute inset-0 bg-black/40 backdrop-blur-sm" ]
         ]
         []
     , HH.div
-        [ HP.classes [ H.ClassName "relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 flex flex-col gap-4" ] ]
+        [ HP.classes [ H.ClassName "relative bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md sm:mx-4 p-6 flex flex-col gap-5" ] ]
         if state.submitSuccess then
           [ HH.p
-              [ HP.classes [ H.ClassName "text-sm text-green-600 text-center py-4" ] ]
+              [ HP.classes [ H.ClassName "text-sm text-green-600 text-center py-6" ] ]
               [ HH.text "保存に成功しました" ]
           , HH.div
               [ HP.classes [ H.ClassName "flex justify-end" ] ]
               [ HH.button
                   [ HE.onClick \_ -> CloseModal
-                  , HP.classes [ H.ClassName "px-4 py-2 text-sm bg-gray-900 text-white rounded-lg" ]
+                  , HP.classes [ H.ClassName "px-5 py-2.5 text-sm font-medium bg-gray-800 hover:bg-gray-700 text-white rounded-xl" ]
                   ]
                   [ HH.text "閉じる" ]
               ]
@@ -317,17 +317,17 @@ modal state =
               [ HP.placeholder "内容を入力..."
               , HP.value state.formContent
               , HE.onValueInput SetFormContent
-              , HP.classes [ H.ClassName "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none h-32" ]
+              , HP.classes [ H.ClassName "w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300 resize-none h-32" ]
               ]
           , HH.input
               [ HP.type_ HP.InputText
               , HP.placeholder "タグ（カンマ区切り）"
               , HP.value state.formTags
               , HE.onValueInput SetFormTags
-              , HP.classes [ H.ClassName "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" ]
+              , HP.classes [ H.ClassName "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" ]
               ]
           , HH.div
-              [ HP.classes [ H.ClassName "flex bg-gray-200 rounded-lg p-1" ] ]
+              [ HP.classes [ H.ClassName "flex bg-gray-100 rounded-xl p-1 gap-1" ] ]
               [ categoryButton "開発" Development state.formCategory
               , categoryButton "一般" General state.formCategory
               ]
@@ -341,13 +341,13 @@ modal state =
               [ HP.classes [ H.ClassName "flex gap-3 justify-end" ] ]
               [ HH.button
                   [ HE.onClick \_ -> CloseModal
-                  , HP.classes [ H.ClassName "px-4 py-2 text-sm text-gray-500 rounded-lg hover:bg-gray-100" ]
+                  , HP.classes [ H.ClassName "px-5 py-2.5 text-sm font-medium text-gray-500 rounded-xl hover:bg-gray-100" ]
                   ]
                   [ HH.text "キャンセル" ]
               , HH.button
                   [ HE.onClick \_ -> SubmitMemory
                   , HP.disabled (state.submitting || String.null state.formContent)
-                  , HP.classes [ H.ClassName "px-4 py-2 text-sm bg-gray-900 text-white rounded-lg disabled:opacity-50" ]
+                  , HP.classes [ H.ClassName "px-5 py-2.5 text-sm font-medium bg-gray-800 hover:bg-gray-700 text-white rounded-xl disabled:opacity-40 disabled:hover:bg-gray-800" ]
                   ]
                   [ HH.text if state.submitting then "保存中..." else "保存" ]
               ]
@@ -363,18 +363,18 @@ categoryButton label cat activeCat =
     [ HH.text label ]
   where
   classes
-    | cat == activeCat = "flex-1 text-sm py-1.5 rounded-md font-medium bg-white shadow"
-    | otherwise = "flex-1 text-sm py-1.5 rounded-md font-medium text-gray-500"
+    | cat == activeCat = "flex-1 text-sm py-2 rounded-lg font-semibold bg-white shadow-sm text-gray-900"
+    | otherwise = "flex-1 text-sm py-2 rounded-lg font-medium text-gray-400 hover:text-gray-600"
 
 footer :: forall slots m. H.ComponentHTML Action slots m
 footer =
   HH.footer
-    [ HP.classes [ H.ClassName "border-t py-3 text-center text-xs text-gray-400" ] ]
+    [ HP.classes [ H.ClassName "py-4 text-center text-xs text-gray-300" ] ]
     [ HH.text "developed by "
     , HH.a
         [ HP.href "https://github.com/nesso-pfl"
         , HP.target "_blank"
-        , HP.classes [ H.ClassName "underline" ]
+        , HP.classes [ H.ClassName "text-gray-400 hover:text-gray-600 underline" ]
         ]
         [ HH.text "nesso-pfl" ]
     ]
