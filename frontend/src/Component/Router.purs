@@ -54,8 +54,10 @@ header state =
         [ HH.text "memory-pfl" ]
     , if state.isLoggedIn
         then HH.span [ HP.classes [ H.ClassName "text-sm text-gray-500" ] ] [ HH.text "ログイン済" ]
-        else HH.button
-          [ HP.classes [ H.ClassName "text-sm bg-gray-900 text-white px-3 py-1.5 rounded" ] ]
+        else HH.a
+          [ HP.href "/auth/login"
+          , HP.classes [ H.ClassName "text-sm bg-gray-900 text-white px-3 py-1.5 rounded no-underline" ]
+          ]
           [ HH.text "Login" ]
     ]
 
