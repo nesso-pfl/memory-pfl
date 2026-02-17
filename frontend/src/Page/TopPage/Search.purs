@@ -12,14 +12,14 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Html.Svg (svgElement)
+import Html.Icons (searchIcon)
 
 tabControl :: forall slots m. State -> H.ComponentHTML Action slots m
 tabControl state =
   HH.div
-    [ HP.classes [ H.ClassName "px-5 pt-4 pb-1" ] ]
+    [ HP.classes [ H.ClassName "border-b border-gray-200 px-4 py-2" ] ]
     [ HH.div
-        [ HP.classes [ H.ClassName "flex bg-gray-100 rounded-xl p-1 gap-1" ] ]
+        [ HP.classes [ H.ClassName "flex bg-gray-100 rounded-2xl p-1 gap-1" ] ]
         [ tabButton "開発" Development state.tab
         , tabButton "一般" General state.tab
         ]
@@ -34,8 +34,8 @@ tabButton label tab activeTab =
     [ HH.text label ]
   where
   classes
-    | tab == activeTab = "flex-1 text-sm py-2 rounded-lg font-semibold bg-white shadow-sm text-gray-900"
-    | otherwise = "flex-1 text-sm py-2 rounded-lg font-medium text-gray-400 hover:text-gray-600"
+    | tab == activeTab = "flex-1 text-sm py-2 rounded-xl font-semibold bg-white shadow-sm text-gray-900"
+    | otherwise = "flex-1 text-sm py-2 rounded-xl font-medium text-gray-600 hover:text-gray-900"
 
 tagSearch :: forall slots m. State -> H.ComponentHTML Action slots m
 tagSearch state =
@@ -45,7 +45,7 @@ tagSearch state =
     ]
     ( [ HH.input
           [ HP.type_ HP.InputText
-          , HP.placeholder "\x1F50D タグで検索..."
+          , HP.placeholder "タグで検索..."
           , HP.value state.tagInput
           , HE.onValueInput SetTagInput
           , HE.onFocusIn \_ -> TagFocus
@@ -77,10 +77,10 @@ tagSearch state =
 searchBar :: forall slots m. State -> H.ComponentHTML Action slots m
 searchBar state =
   HH.div
-    [ HP.classes [ H.ClassName "px-5 pt-2 flex gap-2" ] ]
+    [ HP.classes [ H.ClassName "px-5 pt-2 pb-3 flex gap-2 border-b border-gray-200" ] ]
     [ HH.input
         [ HP.type_ HP.InputText
-        , HP.placeholder "キーワードで検索"
+        , HP.placeholder "キーワードで検索..."
         , HP.value state.searchQuery
         , HE.onValueInput SetSearchQuery
         , HP.classes [ H.ClassName "flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" ]
@@ -90,15 +90,5 @@ searchBar state =
         , HP.disabled (state.searching || String.null state.searchQuery)
         , HP.classes [ H.ClassName "w-10 h-10 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-xl disabled:opacity-40 disabled:hover:bg-blue-500" ]
         ]
-        [ svgElement (H.ElemName "svg")
-            [ HP.attr (H.AttrName "viewBox") "0 0 24 24"
-            , HP.attr (H.AttrName "fill") "none"
-            , HP.attr (H.AttrName "stroke") "currentColor"
-            , HP.attr (H.AttrName "stroke-width") "2.5"
-            , HP.classes [ H.ClassName "w-4.5 h-4.5" ]
-            ]
-            [ svgElement (H.ElemName "circle") [ HP.attr (H.AttrName "cx") "11", HP.attr (H.AttrName "cy") "11", HP.attr (H.AttrName "r") "7" ] []
-            , svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M21 21l-4.35-4.35" ] []
-            ]
-        ]
+        [ searchIcon ]
     ]

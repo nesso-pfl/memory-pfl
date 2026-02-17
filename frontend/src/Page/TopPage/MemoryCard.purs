@@ -9,12 +9,12 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Html.Svg (svgElement)
+import Html.Icons (editIcon, trashIcon)
 
 memoryCard :: forall slots m. Maybe String -> Maybe String -> Memory -> H.ComponentHTML Action slots m
 memoryCard activeTag confirmingDelete mem =
   HH.div
-    [ HP.classes [ H.ClassName "relative border border-gray-200 rounded-xl p-5 flex flex-col gap-3" ] ]
+    [ HP.classes [ H.ClassName "relative border border-gray-200 rounded-xl p-5 flex flex-col gap-3 bg-white" ] ]
     ( [ HH.div
           [ HP.classes [ H.ClassName "flex items-start gap-3" ] ]
           [ HH.p
@@ -76,27 +76,3 @@ tagBadge activeTag t =
     | activeTag == Just t = "text-xs font-medium bg-blue-500 text-white px-2.5 py-1 rounded-full"
     | otherwise = "text-xs font-medium text-blue-500 border border-blue-200 bg-blue-50 px-2.5 py-1 rounded-full hover:bg-blue-100"
 
-editIcon :: forall w i. HH.HTML w i
-editIcon =
-  svgElement (H.ElemName "svg")
-    [ HP.attr (H.AttrName "viewBox") "0 0 24 24"
-    , HP.attr (H.AttrName "fill") "none"
-    , HP.attr (H.AttrName "stroke") "currentColor"
-    , HP.attr (H.AttrName "stroke-width") "2"
-    , HP.classes [ H.ClassName "w-4 h-4" ]
-    ]
-    [ svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" ] [] ]
-
-trashIcon :: forall w i. HH.HTML w i
-trashIcon =
-  svgElement (H.ElemName "svg")
-    [ HP.attr (H.AttrName "viewBox") "0 0 24 24"
-    , HP.attr (H.AttrName "fill") "none"
-    , HP.attr (H.AttrName "stroke") "currentColor"
-    , HP.attr (H.AttrName "stroke-width") "2"
-    , HP.classes [ H.ClassName "w-4 h-4" ]
-    ]
-    [ svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M3 6h18" ] []
-    , svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" ] []
-    , svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" ] []
-    ]
