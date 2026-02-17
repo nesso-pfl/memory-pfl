@@ -178,7 +178,7 @@ tagSearch state =
   suggestionItem t =
     HH.button
       [ HE.onClick \_ -> SelectTag t
-      , HP.classes [ H.ClassName "w-full text-left px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer" ]
+      , HP.classes [ H.ClassName "w-full text-left px-3 py-2 text-sm hover:bg-gray-100" ]
       ]
       [ HH.text t ]
 
@@ -239,7 +239,7 @@ resultList state =
               [ HH.text "タグ:" ]
           , HH.button
               [ HE.onClick \_ -> ClearTag
-              , HP.classes [ H.ClassName "text-xs bg-gray-900 text-white px-2 py-0.5 rounded cursor-pointer inline-flex items-center gap-1" ]
+              , HP.classes [ H.ClassName "text-xs bg-gray-900 text-white px-2 py-0.5 rounded inline-flex items-center gap-1" ]
               ]
               [ HH.text t, HH.text " \x2715" ]
           ]
@@ -274,8 +274,8 @@ tagBadge activeTag t =
     [ HH.text t ]
   where
   classes
-    | activeTag == Just t = "text-xs bg-gray-900 text-white px-2 py-0.5 rounded cursor-pointer"
-    | otherwise = "text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded cursor-pointer hover:bg-gray-200"
+    | activeTag == Just t = "text-xs bg-gray-900 text-white px-2 py-0.5 rounded"
+    | otherwise = "text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded hover:bg-gray-200"
 
 fab :: forall slots m. H.ComponentHTML Action slots m
 fab =
