@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "npx spago bundle --bundle-type app --outfile dist/app.js && cp -r public/. dist/ && npx @tailwindcss/cli -i src/styles.css -o dist/styles.css --minify",
-    "watch:purs": "npx spago bundle --bundle-type app --outfile dist/app.js --watch",
+    "watch:purs": "npx spago bundle --bundle-type app --outfile dist/app.js --bundler-args '--watch'",
     "watch:css": "npx @tailwindcss/cli -i src/styles.css -o dist/styles.css --watch"
   },
   "devDependencies": {
