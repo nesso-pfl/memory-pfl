@@ -6,6 +6,11 @@ use axum::{
 };
 use rust_embed::Embed;
 
+mod model;
+mod repository;
+
+use repository::sqlite::SqliteMemoryRepository;
+
 #[derive(Embed)]
 #[folder = "../frontend/dist/"]
 struct Assets;
@@ -37,6 +42,10 @@ async fn static_handler(uri: axum::http::Uri) -> Response {
 
 #[tokio::main]
 async fn main() {
+    let _repo = SqliteMemoryRepository::new("sqlite:data/memories.db?mode=rwc")
+        .await
+        .expect("failed to initialize database");
+
     let app = Router::new().fallback(get(static_handler));
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
