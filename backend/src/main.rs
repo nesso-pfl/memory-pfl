@@ -7,16 +7,12 @@ use axum::{
     response::{IntoResponse, Response},
     routing::get,
 };
+use backend::embedding::GeminiClient;
+use backend::model::{CreateMemory, UpdateMemory};
+use backend::repository;
+use backend::repository::sqlite::SqliteMemoryRepository;
 use rust_embed::Embed;
 use serde::Deserialize;
-
-mod embedding;
-mod model;
-mod repository;
-
-use embedding::GeminiClient;
-use model::{CreateMemory, UpdateMemory};
-use repository::sqlite::SqliteMemoryRepository;
 
 #[derive(Embed)]
 #[folder = "../frontend/dist/"]
