@@ -11,11 +11,13 @@ searchIcon =
     [ HP.attr (H.AttrName "viewBox") "0 0 24 24"
     , HP.attr (H.AttrName "fill") "none"
     , HP.attr (H.AttrName "stroke") "currentColor"
-    , HP.attr (H.AttrName "stroke-width") "2.5"
-    , HP.classes [ H.ClassName "w-4.5 h-4.5" ]
+    , HP.attr (H.AttrName "stroke-width") "2"
+    , HP.attr (H.AttrName "stroke-linecap") "round"
+    , HP.attr (H.AttrName "stroke-linejoin") "round"
+    , HP.classes [ H.ClassName "w-4 h-4" ]
     ]
-    [ svgElement (H.ElemName "circle") [ HP.attr (H.AttrName "cx") "11", HP.attr (H.AttrName "cy") "11", HP.attr (H.AttrName "r") "7" ] []
-    , svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M21 21l-4.35-4.35" ] []
+    [ svgElement (H.ElemName "circle") [ HP.attr (H.AttrName "cx") "11", HP.attr (H.AttrName "cy") "11", HP.attr (H.AttrName "r") "8" ] []
+    , svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "m21 21-4.3-4.3" ] []
     ]
 
 userIcon :: forall w i. HH.HTML w i
@@ -25,10 +27,12 @@ userIcon =
     , HP.attr (H.AttrName "fill") "none"
     , HP.attr (H.AttrName "stroke") "#3b82f6"
     , HP.attr (H.AttrName "stroke-width") "2"
+    , HP.attr (H.AttrName "stroke-linecap") "round"
+    , HP.attr (H.AttrName "stroke-linejoin") "round"
     , HP.classes [ H.ClassName "w-5 h-5" ]
     ]
-    [ svgElement (H.ElemName "circle") [ HP.attr (H.AttrName "cx") "12", HP.attr (H.AttrName "cy") "8", HP.attr (H.AttrName "r") "4" ] []
-    , svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M4 21v-1a6 6 0 0 1 12 0v1" ] []
+    [ svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" ] []
+    , svgElement (H.ElemName "circle") [ HP.attr (H.AttrName "cx") "12", HP.attr (H.AttrName "cy") "7", HP.attr (H.AttrName "r") "4" ] []
     ]
 
 editIcon :: forall w i. HH.HTML w i
@@ -38,9 +42,11 @@ editIcon =
     , HP.attr (H.AttrName "fill") "none"
     , HP.attr (H.AttrName "stroke") "currentColor"
     , HP.attr (H.AttrName "stroke-width") "2"
+    , HP.attr (H.AttrName "stroke-linecap") "round"
+    , HP.attr (H.AttrName "stroke-linejoin") "round"
     , HP.classes [ H.ClassName "w-4 h-4" ]
     ]
-    [ svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" ] [] ]
+    [ svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" ] [] ]
 
 trashIcon :: forall w i. HH.HTML w i
 trashIcon =
@@ -49,9 +55,13 @@ trashIcon =
     , HP.attr (H.AttrName "fill") "none"
     , HP.attr (H.AttrName "stroke") "currentColor"
     , HP.attr (H.AttrName "stroke-width") "2"
+    , HP.attr (H.AttrName "stroke-linecap") "round"
+    , HP.attr (H.AttrName "stroke-linejoin") "round"
     , HP.classes [ H.ClassName "w-4 h-4" ]
     ]
     [ svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M3 6h18" ] []
-    , svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" ] []
-    , svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" ] []
+    , svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" ] []
+    , svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" ] []
+    , svgElement (H.ElemName "line") [ HP.attr (H.AttrName "x1") "10", HP.attr (H.AttrName "x2") "10", HP.attr (H.AttrName "y1") "11", HP.attr (H.AttrName "y2") "17" ] []
+    , svgElement (H.ElemName "line") [ HP.attr (H.AttrName "x1") "14", HP.attr (H.AttrName "x2") "14", HP.attr (H.AttrName "y1") "11", HP.attr (H.AttrName "y2") "17" ] []
     ]
