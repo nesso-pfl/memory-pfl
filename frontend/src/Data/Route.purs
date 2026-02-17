@@ -3,13 +3,14 @@ module Data.Route where
 import Prelude hiding ((/))
 
 import Data.Generic.Rep (class Generic)
-import Routing.Duplex (RouteDuplex', root)
-import Routing.Duplex.Generic (noArgs, sum)
+import Data.Maybe (Maybe)
+import Routing.Duplex (RouteDuplex', optional, param, root)
+import Routing.Duplex.Generic (sum)
 
-data Route = Home
+data Route = Home (Maybe String)
 
 derive instance Eq Route
 derive instance Generic Route _
 
 routeCodec :: RouteDuplex' Route
-routeCodec = root $ sum { "Home": noArgs }
+routeCodec = root $ sum { "Home": optional (param "tab") }

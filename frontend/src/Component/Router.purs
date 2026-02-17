@@ -3,15 +3,16 @@ module Component.Router where
 import Prelude
 
 import Capability.Memory (class MonadMemory, createMemory, listMemories)
+import Capability.Navigate (class Navigate, navigate)
 import Capability.User (class MonadUser, getProfile)
 import Data.Array (filter) as Array
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..), isJust)
+import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Memory (Memory)
 import Data.Route (Route(..))
 import Data.String.Common (split, trim, null) as String
 import Data.String.Pattern (Pattern(..))
-import Data.Tab (Tab(..), toCategory)
+import Data.Tab (Tab(..), fromCategory, toCategory)
 import Data.User (UserProfile, displayName)
 import Halogen as H
 import Halogen.HTML as HH
@@ -45,7 +46,7 @@ data Action
   | SetFormCategory Tab
   | SubmitMemory
 
-component :: forall i o m. MonadUser m => MonadMemory m => H.Component Query i o m
+component :: forall i o m. MonadUser m => MonadMemory m => Navigate m => H.Component Query i o m
 component = H.mkComponent
   { initialState: \_ ->
       { route: Nothing
@@ -70,7 +71,7 @@ component = H.mkComponent
 
 render :: forall slots m. State -> H.ComponentHTML Action slots m
 render state = case state.route of
-  Just Home ->
+  Just (Home _) ->
     HH.div
       [ HP.classes [ H.ClassName "min-h-screen flex flex-col bg-gray-50" ] ]
       ( [ header state
@@ -279,21 +280,19 @@ footer =
         [ HH.text "nesso-pfl" ]
     ]
 
-handleAction :: forall slots o m. MonadUser m => MonadMemory m => Action -> H.HalogenM State Action slots o m Unit
+handleAction :: forall slots o m. MonadUser m => MonadMemory m => Navigate m => Action -> H.HalogenM State Action slots o m Unit
 handleAction = case _ of
   Initialize -> do
     profile <- getProfile
     H.modify_ _ { profile = profile }
-    handleAction FetchMemories
   FetchMemories -> do
     tab <- H.gets _.tab
     result <- listMemories { category: Just (toCategory tab), page: Nothing, limit: Nothing }
     case result of
       Right memories -> H.modify_ _ { memories = memories }
       Left _ -> pure unit
-  SetTab tab -> do
-    H.modify_ _ { tab = tab }
-    handleAction FetchMemories
+  SetTab tab ->
+    navigate (Home (Just (toCategory tab)))
   OpenModal -> H.modify_ \s -> s
     { showModal = true
     , formContent = ""
@@ -320,7 +319,10 @@ handleAction = case _ of
         handleAction FetchMemories
       Left err -> H.modify_ _ { submitting = false, submitError = Just err }
 
-handleQuery :: forall action slots o m a. Query a -> H.HalogenM State action slots o m (Maybe a)
+handleQuery :: forall slots o m a. MonadUser m => MonadMemory m => Navigate m => Query a -> H.HalogenM State Action slots o m (Maybe a)
 handleQuery (Navigate route a) = do
-  H.modify_ _ { route = Just route }
+  let tab = case route of
+        Home maybeTab -> fromMaybe Development (maybeTab >>= fromCategory)
+  H.modify_ _ { route = Just route, tab = tab }
+  handleAction FetchMemories
   pure (Just a)
