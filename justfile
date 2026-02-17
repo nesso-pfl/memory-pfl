@@ -1,4 +1,5 @@
 # Start frontend watch and backend watch in parallel
 start:
-    npx --prefix frontend spago bundle --bundle-type app --outfile dist/app.js --watch &
+    npm --prefix frontend run watch:purs &
+    npm --prefix frontend run watch:css &
     cd backend && cargo watch -x run
