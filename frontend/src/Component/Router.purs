@@ -2,15 +2,16 @@ module Component.Router where
 
 import Prelude
 
-import Capability.Memory (class MonadMemory, createMemory)
+import Capability.Memory (class MonadMemory, createMemory, listMemories)
 import Capability.User (class MonadUser, getProfile)
 import Data.Array (filter) as Array
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), isJust)
+import Data.Memory (Memory)
 import Data.Route (Route(..))
 import Data.String.Common (split, trim, null) as String
 import Data.String.Pattern (Pattern(..))
-import Data.Tab (Tab(..))
+import Data.Tab (Tab(..), toCategory)
 import Data.User (UserProfile, displayName)
 import Halogen as H
 import Halogen.HTML as HH
@@ -21,6 +22,7 @@ type State =
   { route :: Maybe Route
   , tab :: Tab
   , profile :: Maybe UserProfile
+  , memories :: Array Memory
   , showModal :: Boolean
   , formContent :: String
   , formTags :: String
@@ -34,6 +36,7 @@ data Query a = Navigate Route a
 
 data Action
   = Initialize
+  | FetchMemories
   | SetTab Tab
   | OpenModal
   | CloseModal
@@ -48,6 +51,7 @@ component = H.mkComponent
       { route: Nothing
       , tab: Development
       , profile: Nothing
+      , memories: []
       , showModal: false
       , formContent: ""
       , formTags: ""
@@ -105,7 +109,7 @@ main state =
     [ HP.classes [ H.ClassName "flex-1 flex flex-col" ] ]
     ( [ searchBar
       , tabControl state
-      , resultList
+      , resultList state
       ] <> if isJust state.profile then [ fab ] else []
     )
 
@@ -143,14 +147,35 @@ tabButton label tab activeTab =
     | tab == activeTab = "flex-1 text-sm py-1.5 rounded-md font-medium bg-white shadow"
     | otherwise = "flex-1 text-sm py-1.5 rounded-md font-medium text-gray-500"
 
-resultList :: forall slots m. H.ComponentHTML Action slots m
-resultList =
+resultList :: forall slots m. State -> H.ComponentHTML Action slots m
+resultList state =
   HH.div
-    [ HP.classes [ H.ClassName "flex-1 px-4 py-4" ] ]
+    [ HP.classes [ H.ClassName "flex-1 px-4 py-4 flex flex-col gap-3" ] ]
+    if state.memories == [] then
+      [ HH.p
+          [ HP.classes [ H.ClassName "text-sm text-gray-400 text-center mt-8" ] ]
+          [ HH.text "検索結果がありません" ]
+      ]
+    else
+      (map memoryCard state.memories)
+
+memoryCard :: forall slots m. Memory -> H.ComponentHTML Action slots m
+memoryCard mem =
+  HH.div
+    [ HP.classes [ H.ClassName "bg-white rounded-lg border p-4 flex flex-col gap-2" ] ]
     [ HH.p
-        [ HP.classes [ H.ClassName "text-sm text-gray-400 text-center mt-8" ] ]
-        [ HH.text "検索結果がありません" ]
+        [ HP.classes [ H.ClassName "text-sm text-gray-900 whitespace-pre-wrap" ] ]
+        [ HH.text mem.content ]
+    , HH.div
+        [ HP.classes [ H.ClassName "flex gap-2 flex-wrap" ] ]
+        (map tag mem.tags)
     ]
+
+tag :: forall slots m. String -> H.ComponentHTML Action slots m
+tag t =
+  HH.span
+    [ HP.classes [ H.ClassName "text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded" ] ]
+    [ HH.text t ]
 
 fab :: forall slots m. H.ComponentHTML Action slots m
 fab =
@@ -259,7 +284,16 @@ handleAction = case _ of
   Initialize -> do
     profile <- getProfile
     H.modify_ _ { profile = profile }
-  SetTab tab -> H.modify_ _ { tab = tab }
+    handleAction FetchMemories
+  FetchMemories -> do
+    tab <- H.gets _.tab
+    result <- listMemories { category: Just (toCategory tab), page: Nothing, limit: Nothing }
+    case result of
+      Right memories -> H.modify_ _ { memories = memories }
+      Left _ -> pure unit
+  SetTab tab -> do
+    H.modify_ _ { tab = tab }
+    handleAction FetchMemories
   OpenModal -> H.modify_ \s -> s
     { showModal = true
     , formContent = ""
@@ -278,12 +312,12 @@ handleAction = case _ of
     H.modify_ _ { submitting = true, submitError = Nothing }
     let
       tags = Array.filter (not <<< String.null) $ map String.trim $ String.split (Pattern ",") state.formTags
-      category = case state.formCategory of
-        Development -> "development"
-        General -> "general"
+      category = toCategory state.formCategory
     result <- createMemory { content: state.formContent, tags, category }
     case result of
-      Right _ -> H.modify_ _ { submitting = false, submitSuccess = true }
+      Right _ -> do
+        H.modify_ _ { submitting = false, submitSuccess = true }
+        handleAction FetchMemories
       Left err -> H.modify_ _ { submitting = false, submitError = Just err }
 
 handleQuery :: forall action slots o m a. Query a -> H.HalogenM State action slots o m (Maybe a)
