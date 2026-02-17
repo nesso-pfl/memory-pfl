@@ -3,7 +3,7 @@ module Component.Router where
 import Prelude
 
 import Capability.Memory (class MonadMemory, createMemory, listMemories)
-import Capability.Navigate (class Navigate, navigate)
+import Capability.Navigate (class Navigate, replaceRoute)
 import Capability.User (class MonadUser, getProfile)
 import Data.Array (filter) as Array
 import Data.Either (Either(..))
@@ -292,7 +292,7 @@ handleAction = case _ of
       Right memories -> H.modify_ _ { memories = memories }
       Left _ -> pure unit
   SetTab tab ->
-    navigate (Home (Just (toCategory tab)))
+    replaceRoute (Home (Just (toCategory tab)))
   OpenModal -> H.modify_ \s -> s
     { showModal = true
     , formContent = ""

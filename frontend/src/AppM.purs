@@ -36,6 +36,9 @@ instance Navigate AppM where
   navigate route = do
     { nav } <- ask
     liftEffect $ nav.pushState (unsafeToForeign {}) (print routeCodec route)
+  replaceRoute route = do
+    { nav } <- ask
+    liftEffect $ nav.replaceState (unsafeToForeign {}) (print routeCodec route)
 
 instance MonadUser AppM where
   getProfile = liftAff User.getProfile
