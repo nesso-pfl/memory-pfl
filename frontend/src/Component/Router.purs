@@ -394,8 +394,9 @@ handleAction = case _ of
     case result of
       Right memories -> H.modify_ _ { memories = memories }
       Left _ -> pure unit
-  SetTab tab ->
-    replaceRoute (Home (Just (toCategory tab)))
+  SetTab tab -> do
+    state <- H.get
+    replaceRoute (Home { tab: Just (toCategory tab), tag: state.filterTag })
   SetTagInput v ->
     H.modify_ _ { tagInput = v }
   TagFocus ->
@@ -408,11 +409,12 @@ handleAction = case _ of
         unless inside $ H.modify_ _ { tagFocused = false }
       _, _ -> H.modify_ _ { tagFocused = false }
   SelectTag t -> do
-    H.modify_ _ { filterTag = Just t, tagInput = "", tagFocused = false }
-    handleAction FetchMemories
+    H.modify_ _ { tagInput = "", tagFocused = false }
+    tab <- H.gets _.tab
+    replaceRoute (Home { tab: Just (toCategory tab), tag: Just t })
   ClearTag -> do
-    H.modify_ _ { filterTag = Nothing }
-    handleAction FetchMemories
+    tab <- H.gets _.tab
+    replaceRoute (Home { tab: Just (toCategory tab), tag: Nothing })
   SetSearchQuery v ->
     H.modify_ _ { searchQuery = v }
   SubmitSearch ->
@@ -450,9 +452,12 @@ handleAction = case _ of
 
 handleQuery :: forall slots o m a. MonadEffect m => MonadUser m => MonadMemory m => Navigate m => Query a -> H.HalogenM State Action slots o m (Maybe a)
 handleQuery (Navigate route a) = do
-  let tab = case route of
-        Home maybeTab -> fromMaybe Development (maybeTab >>= fromCategory)
-  H.modify_ _ { route = Just route, tab = tab, filterTag = Nothing, tagInput = "", searchQuery = "" }
+  let { tab, filterTag } = case route of
+        Home p ->
+          { tab: fromMaybe Development (p.tab >>= fromCategory)
+          , filterTag: p.tag
+          }
+  H.modify_ _ { route = Just route, tab = tab, filterTag = filterTag, tagInput = "", searchQuery = "" }
   tagsResult <- listTags (Just (toCategory tab))
   case tagsResult of
     Right tags -> H.modify_ _ { allTags = tags }
