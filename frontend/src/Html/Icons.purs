@@ -14,7 +14,7 @@ searchIcon =
     , HP.attr (H.AttrName "stroke-width") "2"
     , HP.attr (H.AttrName "stroke-linecap") "round"
     , HP.attr (H.AttrName "stroke-linejoin") "round"
-    , HP.classes [ H.ClassName "w-4 h-4" ]
+    , HP.attr (H.AttrName "class") "w-4 h-4"
     ]
     [ svgElement (H.ElemName "circle") [ HP.attr (H.AttrName "cx") "11", HP.attr (H.AttrName "cy") "11", HP.attr (H.AttrName "r") "8" ] []
     , svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "m21 21-4.3-4.3" ] []
@@ -29,7 +29,7 @@ userIcon =
     , HP.attr (H.AttrName "stroke-width") "2"
     , HP.attr (H.AttrName "stroke-linecap") "round"
     , HP.attr (H.AttrName "stroke-linejoin") "round"
-    , HP.classes [ H.ClassName "w-5 h-5" ]
+    , HP.attr (H.AttrName "class") "w-5 h-5"
     ]
     [ svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" ] []
     , svgElement (H.ElemName "circle") [ HP.attr (H.AttrName "cx") "12", HP.attr (H.AttrName "cy") "7", HP.attr (H.AttrName "r") "4" ] []
@@ -44,7 +44,7 @@ editIcon =
     , HP.attr (H.AttrName "stroke-width") "2"
     , HP.attr (H.AttrName "stroke-linecap") "round"
     , HP.attr (H.AttrName "stroke-linejoin") "round"
-    , HP.classes [ H.ClassName "w-4 h-4" ]
+    , HP.attr (H.AttrName "class") "w-4 h-4"
     ]
     [ svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" ] [] ]
 
@@ -57,7 +57,7 @@ trashIcon =
     , HP.attr (H.AttrName "stroke-width") "2"
     , HP.attr (H.AttrName "stroke-linecap") "round"
     , HP.attr (H.AttrName "stroke-linejoin") "round"
-    , HP.classes [ H.ClassName "w-4 h-4" ]
+    , HP.attr (H.AttrName "class") "w-4 h-4"
     ]
     [ svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M3 6h18" ] []
     , svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" ] []
