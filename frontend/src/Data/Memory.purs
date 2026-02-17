@@ -5,6 +5,7 @@ import Prelude
 import Data.Argonaut.Core (jsonEmptyObject, stringify)
 import Data.Argonaut.Decode.Class (decodeJson)
 import Data.Argonaut.Encode.Combinators ((:=), (~>))
+import Data.Array (catMaybes, intercalate)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
@@ -30,11 +31,13 @@ type ListParams =
 listMemories :: ListParams -> Aff (Either String (Array Memory))
 listMemories params = do
   let
-    qs = case params.page, params.limit of
-      Nothing, Nothing -> ""
-      Just p, Nothing -> "?page=" <> show p
-      Nothing, Just l -> "?limit=" <> show l
-      Just p, Just l -> "?page=" <> show p <> "&limit=" <> show l
+    pairs = catMaybes
+      [ map (\p -> "page=" <> show p) params.page
+      , map (\l -> "limit=" <> show l) params.limit
+      ]
+    qs = case pairs of
+      [] -> ""
+      _ -> "?" <> intercalate "&" pairs
   response <- fetch ("/memories" <> qs) {}
   if response.status == 200 then do
     raw <- response.json
