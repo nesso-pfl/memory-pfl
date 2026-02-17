@@ -2,7 +2,7 @@ services:
   app:
     build: .
     ports:
-      - "1230:1230"
+      - "${PORT}:1230"
     volumes:
       - data:/data
 
