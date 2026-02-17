@@ -5,7 +5,7 @@ use axum::{
     extract::State,
     http::{StatusCode, header},
     response::{IntoResponse, Response},
-    routing::{get, post},
+    routing::get,
 };
 use rust_embed::Embed;
 
@@ -47,6 +47,17 @@ async fn static_handler(uri: axum::http::Uri) -> Response {
 
 type AppState = Arc<SqliteMemoryRepository>;
 
+async fn list_memories(State(repo): State<AppState>) -> Response {
+    use repository::MemoryRepository;
+    match repo.list().await {
+        Ok(memories) => Json(memories).into_response(),
+        Err(e) => {
+            eprintln!("list_memories error: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
+    }
+}
+
 async fn create_memory(
     State(repo): State<AppState>,
     Json(input): Json<CreateMemory>,
@@ -73,7 +84,7 @@ async fn main() {
     let state: AppState = Arc::new(repo);
 
     let app = Router::new()
-        .route("/memories", post(create_memory))
+        .route("/memories", get(list_memories).post(create_memory))
         .fallback(get(static_handler))
         .with_state(state);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
