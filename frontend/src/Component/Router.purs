@@ -39,6 +39,8 @@ type State =
   , tagInput :: String
   , tagFocused :: Boolean
   , filterTag :: Maybe String
+  , searchQuery :: String
+  , searching :: Boolean
   , showModal :: Boolean
   , formContent :: String
   , formTags :: String
@@ -59,6 +61,8 @@ data Action
   | DocumentClick Event
   | SelectTag String
   | ClearTag
+  | SetSearchQuery String
+  | SubmitSearch
   | OpenModal
   | CloseModal
   | SetFormContent String
@@ -77,6 +81,8 @@ component = H.mkComponent
       , tagInput: ""
       , tagFocused: false
       , filterTag: Nothing
+      , searchQuery: ""
+      , searching: false
       , showModal: false
       , formContent: ""
       , formTags: ""
@@ -133,7 +139,7 @@ main state =
   HH.main
     [ HP.classes [ H.ClassName "flex-1 flex flex-col" ] ]
     ( [ tagSearch state
-      , searchBar
+      , searchBar state
       , tabControl state
       , resultList state
       ] <> if isJust state.profile then [ fab ] else []
@@ -176,15 +182,23 @@ tagSearch state =
       ]
       [ HH.text t ]
 
-searchBar :: forall slots m. H.ComponentHTML Action slots m
-searchBar =
+searchBar :: forall slots m. State -> H.ComponentHTML Action slots m
+searchBar state =
   HH.div
-    [ HP.classes [ H.ClassName "px-4 pt-2" ] ]
+    [ HP.classes [ H.ClassName "px-4 pt-2 flex gap-2" ] ]
     [ HH.input
         [ HP.type_ HP.InputText
-        , HP.placeholder "\x1F50D 検索..."
-        , HP.classes [ H.ClassName "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" ]
+        , HP.placeholder "\x1F50D キーワード検索..."
+        , HP.value state.searchQuery
+        , HE.onValueInput SetSearchQuery
+        , HP.classes [ H.ClassName "flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" ]
         ]
+    , HH.button
+        [ HE.onClick \_ -> SubmitSearch
+        , HP.disabled state.searching
+        , HP.classes [ H.ClassName "px-3 py-2 text-sm bg-gray-900 text-white rounded-lg disabled:opacity-50" ]
+        ]
+        [ HH.text if state.searching then "検索中..." else "検索" ]
     ]
 
 tabControl :: forall slots m. State -> H.ComponentHTML Action slots m
@@ -374,7 +388,9 @@ handleAction = case _ of
     void $ H.subscribe $ HQE.eventListener EventTypes.click (HTMLDocument.toEventTarget doc) (Just <<< DocumentClick)
   FetchMemories -> do
     state <- H.get
-    result <- listMemories { category: Just (toCategory state.tab), tag: state.filterTag, page: Nothing, limit: Nothing }
+    H.modify_ _ { searching = not (String.null state.searchQuery) }
+    result <- listMemories { q: state.searchQuery, category: Just (toCategory state.tab), tag: state.filterTag, page: Nothing, limit: Nothing }
+    H.modify_ _ { searching = false }
     case result of
       Right memories -> H.modify_ _ { memories = memories }
       Left _ -> pure unit
@@ -396,6 +412,10 @@ handleAction = case _ of
     handleAction FetchMemories
   ClearTag -> do
     H.modify_ _ { filterTag = Nothing }
+    handleAction FetchMemories
+  SetSearchQuery v ->
+    H.modify_ _ { searchQuery = v }
+  SubmitSearch ->
     handleAction FetchMemories
   OpenModal -> H.modify_ \s -> s
     { showModal = true
@@ -432,7 +452,7 @@ handleQuery :: forall slots o m a. MonadEffect m => MonadUser m => MonadMemory m
 handleQuery (Navigate route a) = do
   let tab = case route of
         Home maybeTab -> fromMaybe Development (maybeTab >>= fromCategory)
-  H.modify_ _ { route = Just route, tab = tab, filterTag = Nothing, tagInput = "" }
+  H.modify_ _ { route = Just route, tab = tab, filterTag = Nothing, tagInput = "", searchQuery = "" }
   tagsResult <- listTags (Just (toCategory tab))
   case tagsResult of
     Right tags -> H.modify_ _ { allTags = tags }

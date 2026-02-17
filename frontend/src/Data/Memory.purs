@@ -7,6 +7,7 @@ import Data.Argonaut.Decode.Class (decodeJson)
 import Data.Argonaut.Encode.Combinators ((:=), (~>))
 import Data.Array (catMaybes, intercalate)
 import Data.Either (Either(..))
+import Data.String.Common (null) as String
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
@@ -26,13 +27,15 @@ type CreateMemory =
   { content :: String, tags :: Array String, category :: String }
 
 type ListParams =
-  { category :: Maybe String, tag :: Maybe String, page :: Maybe Int, limit :: Maybe Int }
+  { q :: String, category :: Maybe String, tag :: Maybe String, page :: Maybe Int, limit :: Maybe Int }
 
 listMemories :: ListParams -> Aff (Either String (Array Memory))
 listMemories params = do
   let
+    qPair = if String.null params.q then Nothing else Just ("q=" <> params.q)
     pairs = catMaybes
-      [ map (\c -> "category=" <> c) params.category
+      [ qPair
+      , map (\c -> "category=" <> c) params.category
       , map (\t -> "tag=" <> t) params.tag
       , map (\p -> "page=" <> show p) params.page
       , map (\l -> "limit=" <> show l) params.limit
