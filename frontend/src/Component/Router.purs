@@ -41,6 +41,7 @@ type State =
   , filterTag :: Maybe String
   , searchQuery :: String
   , searching :: Boolean
+  , confirmingDelete :: Maybe String
   , showModal :: Boolean
   , editingId :: Maybe String
   , formContent :: String
@@ -66,6 +67,8 @@ data Action
   | SubmitSearch
   | StartEdit Memory
   | DeleteMemory String
+  | ConfirmDelete
+  | CancelDelete
   | OpenModal
   | CloseModal
   | SetFormContent String
@@ -86,6 +89,7 @@ component = H.mkComponent
       , filterTag: Nothing
       , searchQuery: ""
       , searching: false
+      , confirmingDelete: Nothing
       , showModal: false
       , editingId: Nothing
       , formContent: ""
@@ -255,32 +259,57 @@ resultList state =
             [ HP.classes [ H.ClassName "text-sm text-gray-400 text-center mt-12" ] ]
             [ HH.text "検索結果がありません" ]
         ]
-    | otherwise = map (memoryCard state.filterTag) state.memories
+    | otherwise = map (memoryCard state.filterTag state.confirmingDelete) state.memories
 
-memoryCard :: forall slots m. Maybe String -> Memory -> H.ComponentHTML Action slots m
-memoryCard activeTag mem =
+memoryCard :: forall slots m. Maybe String -> Maybe String -> Memory -> H.ComponentHTML Action slots m
+memoryCard activeTag confirmingDelete mem =
   HH.div
     [ HP.classes [ H.ClassName "group relative bg-white rounded-xl shadow-sm hover:shadow-md p-5 flex flex-col gap-3" ] ]
-    [ HH.div
-        [ HP.classes [ H.ClassName "absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" ] ]
-        [ HH.button
-            [ HE.onClick \_ -> StartEdit mem
-            , HP.classes [ H.ClassName "p-1.5 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100" ]
+    ( [ HH.div
+          [ HP.classes [ H.ClassName "absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" ] ]
+          [ HH.button
+              [ HE.onClick \_ -> StartEdit mem
+              , HP.classes [ H.ClassName "p-1.5 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100" ]
+              ]
+              [ HH.text "\x270E" ]
+          , HH.button
+              [ HE.onClick \_ -> DeleteMemory mem.id
+              , HP.classes [ H.ClassName "p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50" ]
+              ]
+              [ HH.text "\x2715" ]
+          ]
+      , HH.p
+          [ HP.classes [ H.ClassName "text-sm leading-relaxed text-gray-800 whitespace-pre-wrap" ] ]
+          [ HH.text mem.content ]
+      , HH.div
+          [ HP.classes [ H.ClassName "flex gap-1.5 flex-wrap" ] ]
+          (map (tagBadge activeTag) mem.tags)
+      ] <> deleteConfirm
+    )
+  where
+  deleteConfirm
+    | confirmingDelete == Just mem.id =
+        [ HH.div
+            [ HP.classes [ H.ClassName "flex items-center justify-between pt-2 border-t border-gray-100" ] ]
+            [ HH.span
+                [ HP.classes [ H.ClassName "text-sm text-gray-500" ] ]
+                [ HH.text "削除しますか？" ]
+            , HH.div
+                [ HP.classes [ H.ClassName "flex gap-2" ] ]
+                [ HH.button
+                    [ HE.onClick \_ -> CancelDelete
+                    , HP.classes [ H.ClassName "text-xs px-3 py-1.5 rounded-lg text-gray-500 hover:bg-gray-100" ]
+                    ]
+                    [ HH.text "キャンセル" ]
+                , HH.button
+                    [ HE.onClick \_ -> ConfirmDelete
+                    , HP.classes [ H.ClassName "text-xs px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white" ]
+                    ]
+                    [ HH.text "削除" ]
+                ]
             ]
-            [ HH.text "\x270E" ]
-        , HH.button
-            [ HE.onClick \_ -> DeleteMemory mem.id
-            , HP.classes [ H.ClassName "p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50" ]
-            ]
-            [ HH.text "\x2715" ]
         ]
-    , HH.p
-        [ HP.classes [ H.ClassName "text-sm leading-relaxed text-gray-800 whitespace-pre-wrap" ] ]
-        [ HH.text mem.content ]
-    , HH.div
-        [ HP.classes [ H.ClassName "flex gap-1.5 flex-wrap" ] ]
-        (map (tagBadge activeTag) mem.tags)
-    ]
+    | otherwise = []
 
 tagBadge :: forall slots m. Maybe String -> String -> H.ComponentHTML Action slots m
 tagBadge activeTag t =
@@ -446,17 +475,25 @@ handleAction = case _ of
     , submitError = Nothing
     , submitSuccess = false
     }
-  DeleteMemory id -> do
-    result <- deleteMemory id
-    case result of
-      Right _ -> do
-        handleAction FetchMemories
-        tab <- H.gets _.tab
-        tagsResult <- listTags (Just (toCategory tab))
-        case tagsResult of
-          Right tags -> H.modify_ _ { allTags = tags }
+  DeleteMemory id ->
+    H.modify_ _ { confirmingDelete = Just id }
+  ConfirmDelete -> do
+    state <- H.get
+    case state.confirmingDelete of
+      Just id -> do
+        H.modify_ _ { confirmingDelete = Nothing }
+        result <- deleteMemory id
+        case result of
+          Right _ -> do
+            handleAction FetchMemories
+            tagsResult <- listTags (Just (toCategory state.tab))
+            case tagsResult of
+              Right tags -> H.modify_ _ { allTags = tags }
+              Left _ -> pure unit
           Left _ -> pure unit
-      Left _ -> pure unit
+      Nothing -> pure unit
+  CancelDelete ->
+    H.modify_ _ { confirmingDelete = Nothing }
   OpenModal -> H.modify_ \s -> s
     { showModal = true
     , editingId = Nothing
