@@ -2,10 +2,8 @@ module Component.Router where
 
 import Prelude
 
-import Data.Argonaut.Core (jsonEmptyObject, stringify)
-import Data.Argonaut.Decode.Class (decodeJson)
-import Data.Argonaut.Encode.Combinators ((:=), (~>))
-import Unsafe.Coerce (unsafeCoerce)
+import Capability.Memory (class MonadMemory, createMemory)
+import Capability.User (class MonadUser, getProfile)
 import Data.Array (filter) as Array
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), isJust)
@@ -14,9 +12,6 @@ import Data.String.Common (split, trim, null) as String
 import Data.String.Pattern (Pattern(..))
 import Data.Tab (Tab(..))
 import Data.UserProfile (UserProfile)
-import Effect.Aff.Class (class MonadAff)
-import Data.HTTP.Method (Method(..))
-import Fetch (fetch)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -47,7 +42,7 @@ data Action
   | SetFormCategory Tab
   | SubmitMemory
 
-component :: forall i o m. MonadAff m => H.Component Query i o m
+component :: forall i o m. MonadUser m => MonadMemory m => H.Component Query i o m
 component = H.mkComponent
   { initialState: \_ ->
       { route: Nothing
@@ -266,15 +261,11 @@ footer =
         [ HH.text "nesso-pfl" ]
     ]
 
-handleAction :: forall slots o m. MonadAff m => Action -> H.HalogenM State Action slots o m Unit
+handleAction :: forall slots o m. MonadUser m => MonadMemory m => Action -> H.HalogenM State Action slots o m Unit
 handleAction = case _ of
   Initialize -> do
-    response <- H.liftAff $ fetch "/auth/me" {}
-    when (response.status == 200) do
-      raw <- H.liftAff response.json
-      case decodeJson (unsafeCoerce raw) of
-        Right p -> H.modify_ _ { profile = Just p }
-        Left _ -> pure unit
+    profile <- getProfile
+    H.modify_ _ { profile = profile }
   SetTab tab -> H.modify_ _ { tab = tab }
   OpenModal -> H.modify_ \s -> s
     { showModal = true
@@ -297,20 +288,10 @@ handleAction = case _ of
       category = case state.formCategory of
         Development -> "development"
         General -> "general"
-      body = stringify
-        $ "content" := state.formContent
-        ~> "tags" := tags
-        ~> "category" := category
-        ~> jsonEmptyObject
-    response <- H.liftAff $ fetch "/memories"
-      { method: POST
-      , headers: { "Content-Type": "application/json" }
-      , body
-      }
-    if response.status == 201 then
-      H.modify_ _ { submitting = false, submitSuccess = true }
-    else
-      H.modify_ _ { submitting = false, submitError = Just "保存に失敗しました" }
+    result <- createMemory { content: state.formContent, tags, category }
+    case result of
+      Right _ -> H.modify_ _ { submitting = false, submitSuccess = true }
+      Left err -> H.modify_ _ { submitting = false, submitError = Just err }
 
 handleQuery :: forall action slots o m a. Query a -> H.HalogenM State action slots o m (Maybe a)
 handleQuery (Navigate route a) = do
