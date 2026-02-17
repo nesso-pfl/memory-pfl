@@ -35,6 +35,7 @@ pub struct Memory {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(Deserialize)]
 pub struct CreateMemory {
     pub content: String,
     pub tags: Vec<String>,
