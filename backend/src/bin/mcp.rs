@@ -38,7 +38,7 @@ impl MemoryServer {
 
     #[tool(description = "List all memories")]
     async fn list_memories(&self) -> String {
-        match self.repo.list(100, 0).await {
+        match self.repo.list(None, 100, 0).await {
             Ok(memories) => serde_json::to_string(&memories).unwrap_or_default(),
             Err(e) => format!("Error: {e}"),
         }

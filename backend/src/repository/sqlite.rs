@@ -185,16 +185,36 @@ impl MemoryRepository for SqliteMemoryRepository {
         Ok(())
     }
 
-    async fn list(&self, limit: usize, offset: usize) -> Result<Vec<Memory>, RepositoryError> {
+    async fn list(
+        &self,
+        category: Option<Category>,
+        limit: usize,
+        offset: usize,
+    ) -> Result<Vec<Memory>, RepositoryError> {
         let limit = limit as i64;
         let offset = offset as i64;
-        let rows: Vec<MemoryRow> =
-            sqlx::query_as("SELECT * FROM memories ORDER BY created_at DESC LIMIT ? OFFSET ?")
+        let rows: Vec<MemoryRow> = match category {
+            Some(cat) => {
+                sqlx::query_as(
+                    "SELECT * FROM memories WHERE category = ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                )
+                .bind(cat.as_str())
                 .bind(limit)
                 .bind(offset)
                 .fetch_all(&self.pool)
                 .await
-                .map_err(|e| RepositoryError::Internal(e.into()))?;
+            }
+            None => {
+                sqlx::query_as(
+                    "SELECT * FROM memories ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                )
+                .bind(limit)
+                .bind(offset)
+                .fetch_all(&self.pool)
+                .await
+            }
+        }
+        .map_err(|e| RepositoryError::Internal(e.into()))?;
 
         rows.into_iter().map(TryInto::try_into).collect()
     }

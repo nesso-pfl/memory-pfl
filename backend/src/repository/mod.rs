@@ -2,7 +2,7 @@ pub mod sqlite;
 
 use std::future::Future;
 
-use crate::model::{CreateMemory, Memory, UpdateMemory};
+use crate::model::{Category, CreateMemory, Memory, UpdateMemory};
 
 #[derive(Debug, thiserror::Error)]
 pub enum RepositoryError {
@@ -29,7 +29,7 @@ pub trait MemoryRepository: Send + Sync {
 
     fn delete(&self, id: &str) -> impl Future<Output = Result<(), RepositoryError>> + Send;
 
-    fn list(&self, limit: usize, offset: usize) -> impl Future<Output = Result<Vec<Memory>, RepositoryError>> + Send;
+    fn list(&self, category: Option<Category>, limit: usize, offset: usize) -> impl Future<Output = Result<Vec<Memory>, RepositoryError>> + Send;
 
     fn search(
         &self,

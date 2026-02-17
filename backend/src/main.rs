@@ -9,7 +9,7 @@ use axum::{
     routing::get,
 };
 use backend::embedding::GeminiClient;
-use backend::model::{CreateMemory, UpdateMemory};
+use backend::model::{Category, CreateMemory, UpdateMemory};
 use backend::repository;
 use backend::repository::sqlite::SqliteMemoryRepository;
 use rust_embed::Embed;
@@ -87,7 +87,7 @@ async fn list_memories(
     if params.q.is_empty() {
         let limit = params.limit.min(200);
         let offset = params.page.saturating_sub(1) * limit;
-        return match state.repo.list(limit, offset).await {
+        return match state.repo.list(params.category, limit, offset).await {
             Ok(memories) => Json(memories).into_response(),
             Err(e) => {
                 eprintln!("list_memories error: {e}");
@@ -182,6 +182,7 @@ async fn delete_memory(_: RequireWrite, State(state): State<AppState>, Path(id):
 struct ListQuery {
     #[serde(default)]
     q: String,
+    category: Option<Category>,
     #[serde(default = "default_limit")]
     limit: usize,
     #[serde(default = "default_page")]
