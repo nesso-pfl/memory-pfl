@@ -14,7 +14,7 @@ import Html.Icons (editIcon, trashIcon)
 memoryCard :: forall slots m. Maybe String -> Maybe String -> Memory -> H.ComponentHTML Action slots m
 memoryCard activeTag confirmingDelete mem =
   HH.div
-    [ HP.classes [ H.ClassName "relative border border-gray-200 rounded-xl p-5 flex flex-col gap-3 bg-white" ] ]
+    [ HP.classes [ H.ClassName "relative border border-gray-300 rounded-xl p-3 flex flex-col gap-3 bg-white" ] ]
     ( [ HH.div
           [ HP.classes [ H.ClassName "flex items-start gap-3" ] ]
           [ HH.p
@@ -24,12 +24,12 @@ memoryCard activeTag confirmingDelete mem =
               [ HP.classes [ H.ClassName "flex gap-1 shrink-0" ] ]
               [ HH.button
                   [ HE.onClick \_ -> StartEdit mem
-                  , HP.classes [ H.ClassName "p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100" ]
+                  , HP.classes [ H.ClassName "p-2 rounded-lg text-blue-500 hover:text-blue-600 hover:bg-blue-100" ]
                   ]
                   [ editIcon ]
               , HH.button
                   [ HE.onClick \_ -> DeleteMemory mem.id
-                  , HP.classes [ H.ClassName "p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50" ]
+                  , HP.classes [ H.ClassName "p-2 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-100" ]
                   ]
                   [ trashIcon ]
               ]
