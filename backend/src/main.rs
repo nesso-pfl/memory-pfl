@@ -116,6 +116,18 @@ async fn update_memory(
     }
 }
 
+async fn delete_memory(State(state): State<AppState>, Path(id): Path<String>) -> Response {
+    use repository::MemoryRepository;
+    match state.repo.delete(&id).await {
+        Ok(()) => StatusCode::NO_CONTENT.into_response(),
+        Err(repository::RepositoryError::NotFound) => StatusCode::NOT_FOUND.into_response(),
+        Err(e) => {
+            eprintln!("delete_memory error: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
+    }
+}
+
 #[derive(Deserialize)]
 struct SearchQuery {
     q: String,
@@ -164,7 +176,7 @@ async fn main() {
     let app = Router::new()
         .route("/memories", get(list_memories).post(create_memory))
         .route("/memories/search", get(search_memories))
-        .route("/memories/{id}", get(get_memory).put(update_memory))
+        .route("/memories/{id}", get(get_memory).put(update_memory).delete(delete_memory))
         .fallback(get(static_handler))
         .with_state(state);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
