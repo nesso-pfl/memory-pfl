@@ -2,11 +2,13 @@
   "name": "frontend",
   "private": true,
   "scripts": {
-    "build": "npx spago bundle --bundle-type app --outfile dist/app.js && cp -r public/. dist/"
+    "build": "npx spago bundle --bundle-type app --outfile dist/app.js && cp -r public/. dist/ && npx @tailwindcss/cli -i src/styles.css -o dist/styles.css --minify"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.1.18",
     "esbuild": "^0.27.3",
     "purescript": "^0.15.15",
-    "spago": "^1.0.3"
+    "spago": "^1.0.3",
+    "tailwindcss": "^4.1.18"
   }
 }
