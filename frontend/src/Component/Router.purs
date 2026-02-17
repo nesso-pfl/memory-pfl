@@ -160,7 +160,7 @@ tagSearch state =
         ]
   suggestionItem t =
     HH.button
-      [ HE.onClick \_ -> SelectTag t
+      [ HE.onMouseDown \_ -> SelectTag t
       , HP.classes [ H.ClassName "w-full text-left px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer" ]
       ]
       [ HH.text t ]
