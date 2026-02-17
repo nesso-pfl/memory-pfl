@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::{
     Json, Router,
-    extract::{Query, State},
+    extract::{Path, Query, State},
     http::{StatusCode, header},
     response::{IntoResponse, Response},
     routing::get,
@@ -60,6 +60,18 @@ async fn list_memories(State(state): State<AppState>) -> Response {
         Ok(memories) => Json(memories).into_response(),
         Err(e) => {
             eprintln!("list_memories error: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
+    }
+}
+
+async fn get_memory(State(state): State<AppState>, Path(id): Path<String>) -> Response {
+    use repository::MemoryRepository;
+    match state.repo.get(&id).await {
+        Ok(memory) => Json(memory).into_response(),
+        Err(repository::RepositoryError::NotFound) => StatusCode::NOT_FOUND.into_response(),
+        Err(e) => {
+            eprintln!("get_memory error: {e}");
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
     }
@@ -136,6 +148,7 @@ async fn main() {
     let app = Router::new()
         .route("/memories", get(list_memories).post(create_memory))
         .route("/memories/search", get(search_memories))
+        .route("/memories/{id}", get(get_memory))
         .fallback(get(static_handler))
         .with_state(state);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
