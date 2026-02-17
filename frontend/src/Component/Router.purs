@@ -15,10 +15,20 @@ import Data.String.Common (split, trim, null, toLower) as String
 import Data.String.Pattern (Pattern(..))
 import Data.Tab (Tab(..), fromCategory, toCategory)
 import Data.User (UserProfile, displayName)
+import Effect.Class (class MonadEffect, liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Halogen.Query.Event as HQE
+import Web.DOM.Element as DOMElement
+import Web.DOM.Node as Node
+import Web.Event.Event (Event)
+import Web.Event.Event as Event
+import Web.HTML (window)
+import Web.HTML.HTMLDocument as HTMLDocument
+import Web.HTML.Window (document)
+import Web.UIEvent.MouseEvent.EventTypes (click) as EventTypes
 
 type State =
   { route :: Maybe Route
@@ -46,7 +56,7 @@ data Action
   | SetTab Tab
   | SetTagInput String
   | TagFocus
-  | TagBlur
+  | DocumentClick Event
   | SelectTag String
   | ClearTag
   | OpenModal
@@ -56,7 +66,7 @@ data Action
   | SetFormCategory Tab
   | SubmitMemory
 
-component :: forall i o m. MonadUser m => MonadMemory m => Navigate m => H.Component Query i o m
+component :: forall i o m. MonadEffect m => MonadUser m => MonadMemory m => Navigate m => H.Component Query i o m
 component = H.mkComponent
   { initialState: \_ ->
       { route: Nothing
@@ -132,14 +142,15 @@ main state =
 tagSearch :: forall slots m. State -> H.ComponentHTML Action slots m
 tagSearch state =
   HH.div
-    [ HP.classes [ H.ClassName "px-4 pt-4 relative" ] ]
+    [ HP.ref (H.RefLabel "tagSearch")
+    , HP.classes [ H.ClassName "px-4 pt-4 relative" ]
+    ]
     ( [ HH.input
           [ HP.type_ HP.InputText
           , HP.placeholder "\x1F50D タグで検索..."
           , HP.value state.tagInput
           , HE.onValueInput SetTagInput
           , HE.onFocusIn \_ -> TagFocus
-          , HE.onFocusOut \_ -> TagBlur
           , HP.classes [ H.ClassName "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" ]
           ]
       ] <> suggestions
@@ -160,7 +171,7 @@ tagSearch state =
         ]
   suggestionItem t =
     HH.button
-      [ HE.onMouseDown \_ -> SelectTag t
+      [ HE.onClick \_ -> SelectTag t
       , HP.classes [ H.ClassName "w-full text-left px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer" ]
       ]
       [ HH.text t ]
@@ -354,11 +365,13 @@ footer =
         [ HH.text "nesso-pfl" ]
     ]
 
-handleAction :: forall slots o m. MonadUser m => MonadMemory m => Navigate m => Action -> H.HalogenM State Action slots o m Unit
+handleAction :: forall slots o m. MonadEffect m => MonadUser m => MonadMemory m => Navigate m => Action -> H.HalogenM State Action slots o m Unit
 handleAction = case _ of
   Initialize -> do
     profile <- getProfile
     H.modify_ _ { profile = profile }
+    doc <- liftEffect $ window >>= document
+    void $ H.subscribe $ HQE.eventListener EventTypes.click (HTMLDocument.toEventTarget doc) (Just <<< DocumentClick)
   FetchMemories -> do
     state <- H.get
     result <- listMemories { category: Just (toCategory state.tab), tag: state.filterTag, page: Nothing, limit: Nothing }
@@ -371,8 +384,13 @@ handleAction = case _ of
     H.modify_ _ { tagInput = v }
   TagFocus ->
     H.modify_ _ { tagFocused = true }
-  TagBlur ->
-    H.modify_ _ { tagFocused = false }
+  DocumentClick ev -> do
+    mRef <- H.getRef (H.RefLabel "tagSearch")
+    case mRef, Event.target ev >>= DOMElement.fromEventTarget of
+      Just el, Just targetEl -> do
+        inside <- liftEffect $ Node.contains (DOMElement.toNode el) (DOMElement.toNode targetEl)
+        unless inside $ H.modify_ _ { tagFocused = false }
+      _, _ -> H.modify_ _ { tagFocused = false }
   SelectTag t -> do
     H.modify_ _ { filterTag = Just t, tagInput = "", tagFocused = false }
     handleAction FetchMemories
@@ -410,7 +428,7 @@ handleAction = case _ of
         handleAction FetchMemories
       Left err -> H.modify_ _ { submitting = false, submitError = Just err }
 
-handleQuery :: forall slots o m a. MonadUser m => MonadMemory m => Navigate m => Query a -> H.HalogenM State Action slots o m (Maybe a)
+handleQuery :: forall slots o m a. MonadEffect m => MonadUser m => MonadMemory m => Navigate m => Query a -> H.HalogenM State Action slots o m (Maybe a)
 handleQuery (Navigate route a) = do
   let tab = case route of
         Home maybeTab -> fromMaybe Development (maybeTab >>= fromCategory)
