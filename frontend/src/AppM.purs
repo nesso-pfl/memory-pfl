@@ -41,4 +41,5 @@ instance MonadUser AppM where
   getProfile = liftAff User.getProfile
 
 instance MonadMemory AppM where
+  listMemories = liftAff <<< Memory.listMemories
   createMemory = liftAff <<< Memory.createMemory

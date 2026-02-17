@@ -3,14 +3,46 @@ module Data.Memory where
 import Prelude
 
 import Data.Argonaut.Core (jsonEmptyObject, stringify)
+import Data.Argonaut.Decode.Class (decodeJson)
 import Data.Argonaut.Encode.Combinators ((:=), (~>))
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
+import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Fetch (fetch)
+import Unsafe.Coerce (unsafeCoerce)
+
+type Memory =
+  { id :: String
+  , content :: String
+  , tags :: Array String
+  , category :: String
+  , created_at :: String
+  , updated_at :: String
+  }
 
 type CreateMemory =
   { content :: String, tags :: Array String, category :: String }
+
+type ListParams =
+  { page :: Maybe Int, limit :: Maybe Int }
+
+listMemories :: ListParams -> Aff (Either String (Array Memory))
+listMemories params = do
+  let
+    qs = case params.page, params.limit of
+      Nothing, Nothing -> ""
+      Just p, Nothing -> "?page=" <> show p
+      Nothing, Just l -> "?limit=" <> show l
+      Just p, Just l -> "?page=" <> show p <> "&limit=" <> show l
+  response <- fetch ("/memories" <> qs) {}
+  if response.status == 200 then do
+    raw <- response.json
+    case decodeJson (unsafeCoerce raw) of
+      Right memories -> pure (Right memories)
+      Left err -> pure (Left (show err))
+  else
+    pure (Left "メモリの取得に失敗しました")
 
 createMemory :: CreateMemory -> Aff (Either String Unit)
 createMemory mem = do
