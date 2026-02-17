@@ -5,3 +5,7 @@ start:
     npm --prefix frontend run watch:purs &
     npm --prefix frontend run watch:css &
     cd backend && cargo watch -x run
+
+# Build production Docker image
+build-image:
+    docker build -t memory-pfl .

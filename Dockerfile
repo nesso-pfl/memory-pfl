@@ -16,7 +16,8 @@ RUN cargo build --release
 
 # Stage 3: Runtime
 FROM debian:bookworm-slim
-RUN mkdir /data
+WORKDIR /app
+RUN mkdir data
 COPY --from=backend-build /app/backend/target/release/backend /usr/local/bin/backend
-EXPOSE 3000
+EXPOSE 1230
 CMD ["backend"]
