@@ -2,3 +2,4 @@
 /.spago/
 /node_modules/
 /dist/
+.psc-ide-port
