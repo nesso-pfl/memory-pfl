@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$TOOL_INPUT\" | jq -re '.command | test(\"git commit\")' > /dev/null 2>&1; then cd \"$CLAUDE_PROJECT_DIR/backend\" && cargo fmt --check && cargo clippy -- -D warnings; fi",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  }
+}
