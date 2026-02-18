@@ -6,4 +6,4 @@ start:
 
 # Build production Docker image
 build-image:
-    docker build -t memory-pfl .
+    docker build --ssh default -t memory-pfl .
