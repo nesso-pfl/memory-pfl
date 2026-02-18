@@ -9,6 +9,8 @@ import Halogen (HalogenM)
 
 class Monad m <= MonadUser m where
   getProfile :: m (Maybe UserProfile)
+  logout :: m Unit
 
 instance MonadUser m => MonadUser (HalogenM st act slots msg m) where
   getProfile = lift getProfile
+  logout = lift logout

@@ -3,8 +3,10 @@ module Data.User where
 import Prelude
 
 import Data.Argonaut.Decode.Class (decodeJson)
+import Data.HTTP.Method (Method(..))
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
+import Effect (Effect)
 import Effect.Aff (Aff)
 import Fetch (fetch)
 import Unsafe.Coerce (unsafeCoerce)
@@ -33,3 +35,9 @@ getProfile = do
       Left _ -> pure Nothing
   else
     pure Nothing
+
+logout :: Aff Unit
+logout = do
+  void $ fetch "/auth/logout" { method: POST }
+
+foreign import redirectToRoot :: Effect Unit

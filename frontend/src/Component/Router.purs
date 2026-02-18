@@ -4,7 +4,7 @@ import Prelude
 
 import Capability.Memory (class MonadMemory, createMemory, deleteMemory, listMemories, listTags, updateMemory)
 import Capability.Navigate (class Navigate, replaceRoute)
-import Capability.User (class MonadUser, getProfile)
+import Capability.User (class MonadUser, getProfile, logout)
 import Component.Footer (footer)
 import Component.Header (header)
 import Component.Router.Types (Action(..), Query(..), State)
@@ -53,6 +53,7 @@ component = H.mkComponent
       , submitting: false
       , submitError: Nothing
       , submitSuccess: false
+      , showUserMenu: false
       }
   , render
   , eval: H.mkEval $ H.defaultEval
@@ -66,7 +67,7 @@ render :: forall slots m. State -> H.ComponentHTML Action slots m
 render state = case state.route of
   Just (Home _) ->
     HH.div
-      [ HP.classes [ H.ClassName "min-h-screen flex flex-col bg-gray-50" ] ]
+      [ HP.classes [ H.ClassName "min-h-screen flex flex-col" ] ]
       ( [ header state
         , topPage state
         , footer
@@ -98,12 +99,19 @@ handleAction = case _ of
   TagFocus ->
     H.modify_ _ { tagFocused = true }
   DocumentClick ev -> do
-    mRef <- H.getRef (H.RefLabel "tagSearch")
-    case mRef, Event.target ev >>= DOMElement.fromEventTarget of
+    let mTarget = Event.target ev >>= DOMElement.fromEventTarget
+    mTagRef <- H.getRef (H.RefLabel "tagSearch")
+    case mTagRef, mTarget of
       Just el, Just targetEl -> do
         inside <- liftEffect $ Node.contains (DOMElement.toNode el) (DOMElement.toNode targetEl)
         unless inside $ H.modify_ _ { tagFocused = false }
       _, _ -> H.modify_ _ { tagFocused = false }
+    mMenuRef <- H.getRef (H.RefLabel "userMenu")
+    case mMenuRef, mTarget of
+      Just el, Just targetEl -> do
+        inside <- liftEffect $ Node.contains (DOMElement.toNode el) (DOMElement.toNode targetEl)
+        unless inside $ H.modify_ _ { showUserMenu = false }
+      _, _ -> H.modify_ _ { showUserMenu = false }
   SelectTag t -> do
     H.modify_ _ { tagInput = "", tagFocused = false }
     tab <- H.gets _.tab
@@ -178,6 +186,10 @@ handleAction = case _ of
           Left _ -> pure unit
         handleAction FetchMemories
       Left err -> H.modify_ _ { submitting = false, submitError = Just err }
+  ToggleUserMenu ->
+    H.modify_ \s -> s { showUserMenu = not s.showUserMenu }
+  Logout ->
+    logout
 
 handleQuery :: forall slots o m a. MonadEffect m => MonadUser m => MonadMemory m => Navigate m => Query a -> H.HalogenM State Action slots o m (Maybe a)
 handleQuery (Navigate route a) = do

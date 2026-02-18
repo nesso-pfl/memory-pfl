@@ -27,6 +27,7 @@ type State =
   , submitting :: Boolean
   , submitError :: Maybe String
   , submitSuccess :: Boolean
+  , showUserMenu :: Boolean
   }
 
 data Query a = Navigate Route a
@@ -52,3 +53,5 @@ data Action
   | SetFormTags String
   | SetFormCategory Tab
   | SubmitMemory
+  | ToggleUserMenu
+  | Logout

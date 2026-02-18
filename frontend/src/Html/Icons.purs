@@ -65,3 +65,19 @@ trashIcon =
     , svgElement (H.ElemName "line") [ HP.attr (H.AttrName "x1") "10", HP.attr (H.AttrName "x2") "10", HP.attr (H.AttrName "y1") "11", HP.attr (H.AttrName "y2") "17" ] []
     , svgElement (H.ElemName "line") [ HP.attr (H.AttrName "x1") "14", HP.attr (H.AttrName "x2") "14", HP.attr (H.AttrName "y1") "11", HP.attr (H.AttrName "y2") "17" ] []
     ]
+
+logoutIcon :: forall w i. HH.HTML w i
+logoutIcon =
+  svgElement (H.ElemName "svg")
+    [ HP.attr (H.AttrName "viewBox") "0 0 24 24"
+    , HP.attr (H.AttrName "fill") "none"
+    , HP.attr (H.AttrName "stroke") "currentColor"
+    , HP.attr (H.AttrName "stroke-width") "2"
+    , HP.attr (H.AttrName "stroke-linecap") "round"
+    , HP.attr (H.AttrName "stroke-linejoin") "round"
+    , HP.attr (H.AttrName "class") "w-4 h-4"
+    ]
+    [ svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" ] []
+    , svgElement (H.ElemName "polyline") [ HP.attr (H.AttrName "points") "16 17 21 12 16 7" ] []
+    , svgElement (H.ElemName "line") [ HP.attr (H.AttrName "x1") "21", HP.attr (H.AttrName "x2") "9", HP.attr (H.AttrName "y1") "12", HP.attr (H.AttrName "y2") "12" ] []
+    ]

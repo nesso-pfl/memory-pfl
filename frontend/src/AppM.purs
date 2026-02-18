@@ -42,6 +42,9 @@ instance Navigate AppM where
 
 instance MonadUser AppM where
   getProfile = liftAff User.getProfile
+  logout = do
+    liftAff User.logout
+    liftEffect User.redirectToRoot
 
 instance MonadMemory AppM where
   listMemories = liftAff <<< Memory.listMemories
