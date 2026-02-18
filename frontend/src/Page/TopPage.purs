@@ -54,7 +54,8 @@ resultList state =
 fab :: forall slots m. H.ComponentHTML Action slots m
 fab =
   HH.button
-    [ HE.onClick \_ -> OpenModal
+    [ HP.attr (H.AttrName "aria-label") "メモリを作成"
+    , HE.onClick \_ -> OpenModal
     , HP.classes [ H.ClassName "fixed bottom-6 right-6 w-14 h-14 bg-gray-800 hover:bg-gray-700 text-white rounded-full shadow-lg text-2xl flex items-center justify-center" ]
     ]
     [ HH.text "＋" ]

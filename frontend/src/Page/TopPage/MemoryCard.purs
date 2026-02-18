@@ -23,12 +23,14 @@ memoryCard activeTag confirmingDelete mem =
           , HH.div
               [ HP.classes [ H.ClassName "flex gap-1 shrink-0" ] ]
               [ HH.button
-                  [ HE.onClick \_ -> StartEdit mem
+                  [ HP.attr (H.AttrName "aria-label") "編集"
+                  , HE.onClick \_ -> StartEdit mem
                   , HP.classes [ H.ClassName "p-2 rounded-lg text-blue-500 hover:text-blue-600 hover:bg-blue-100" ]
                   ]
                   [ editIcon ]
               , HH.button
-                  [ HE.onClick \_ -> DeleteMemory mem.id
+                  [ HP.attr (H.AttrName "aria-label") "削除"
+                  , HE.onClick \_ -> DeleteMemory mem.id
                   , HP.classes [ H.ClassName "p-2 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-100" ]
                   ]
                   [ trashIcon ]

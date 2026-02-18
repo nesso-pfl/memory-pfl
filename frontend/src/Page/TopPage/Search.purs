@@ -88,7 +88,8 @@ searchBar state =
         , HP.classes [ H.ClassName "flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" ]
         ]
     , HH.button
-        [ HE.onClick \_ -> SubmitSearch
+        [ HP.attr (H.AttrName "aria-label") "検索"
+        , HE.onClick \_ -> SubmitSearch
         , HP.disabled (state.searching || String.null state.searchQuery)
         , HP.classes [ H.ClassName "w-10 h-10 flex items-center justify-center bg-black/80 hover:bg-black/60 text-white rounded-xl disabled:opacity-40 disabled:hover:bg-black/80" ]
         ]
