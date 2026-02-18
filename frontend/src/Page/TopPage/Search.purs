@@ -58,8 +58,10 @@ tagSearch state =
   matched
     | String.null state.tagInput = state.allTags
     | otherwise =
-        let input = String.toLower state.tagInput
-        in Array.filter (\t -> String.contains (Pattern input) (String.toLower t)) state.allTags
+        let
+          input = String.toLower state.tagInput
+        in
+          Array.filter (\t -> String.contains (Pattern input) (String.toLower t)) state.allTags
   suggestions
     | not state.tagFocused = []
     | Array.null matched = []

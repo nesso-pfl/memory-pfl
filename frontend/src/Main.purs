@@ -19,5 +19,8 @@ main = launchAff_ do
   nav <- H.liftEffect makeInterface
   let env = { nav }
   halogenIO <- runUI (H.hoist (runAppM env) Router.component) unit body
-  void $ H.liftEffect $ matchesWith (parse routeCodec) (\_ new ->
-    launchAff_ $ void $ halogenIO.query $ H.mkTell $ Router.Navigate new) nav
+  void $ H.liftEffect $ matchesWith (parse routeCodec)
+    ( \_ new ->
+        launchAff_ $ void $ halogenIO.query $ H.mkTell $ Router.Navigate new
+    )
+    nav

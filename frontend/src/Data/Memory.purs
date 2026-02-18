@@ -54,9 +54,10 @@ listMemories params = do
 
 listTags :: Maybe String -> Aff (Either String (Array String))
 listTags category = do
-  let qs = case category of
-        Just c -> "?category=" <> c
-        Nothing -> ""
+  let
+    qs = case category of
+      Just c -> "?category=" <> c
+      Nothing -> ""
   response <- fetch ("/memories/tags" <> qs) {}
   if response.status == 200 then do
     raw <- response.json
@@ -71,9 +72,9 @@ createMemory mem = do
   let
     body = stringify
       $ "content" := mem.content
-      ~> "tags" := mem.tags
-      ~> "category" := mem.category
-      ~> jsonEmptyObject
+          ~> "tags" := mem.tags
+          ~> "category" := mem.category
+          ~> jsonEmptyObject
   response <- fetch "/memories"
     { method: POST
     , headers: { "Content-Type": "application/json" }
@@ -89,9 +90,9 @@ updateMemory id mem = do
   let
     body = stringify
       $ "content" := mem.content
-      ~> "tags" := mem.tags
-      ~> "category" := mem.category
-      ~> jsonEmptyObject
+          ~> "tags" := mem.tags
+          ~> "category" := mem.category
+          ~> jsonEmptyObject
   response <- fetch ("/memories/" <> id)
     { method: PUT
     , headers: { "Content-Type": "application/json" }

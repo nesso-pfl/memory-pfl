@@ -192,11 +192,12 @@ handleAction = case _ of
 
 handleQuery :: forall slots o m a. MonadEffect m => MonadUser m => MonadMemory m => Navigate m => Query a -> H.HalogenM State Action slots o m (Maybe a)
 handleQuery (Navigate route a) = do
-  let { tab, filterTag } = case route of
-        Home p ->
-          { tab: fromMaybe Development (p.tab >>= fromCategory)
-          , filterTag: p.tag
-          }
+  let
+    { tab, filterTag } = case route of
+      Home p ->
+        { tab: fromMaybe Development (p.tab >>= fromCategory)
+        , filterTag: p.tag
+        }
   H.modify_ _ { route = Just route, tab = tab, filterTag = filterTag, tagInput = "", searchQuery = "" }
   tagsResult <- listTags (Just (toCategory tab))
   case tagsResult of

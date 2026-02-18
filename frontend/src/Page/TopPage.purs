@@ -26,7 +26,7 @@ resultList :: forall slots m. State -> H.ComponentHTML Action slots m
 resultList state =
   HH.div
     [ HP.classes [ H.ClassName "flex-1 px-5 py-4 flex flex-col gap-3 bg-gray-50" ] ]
-    ( filterBadge <> content )
+    (filterBadge <> content)
   where
   filterBadge = case state.filterTag of
     Just t ->
