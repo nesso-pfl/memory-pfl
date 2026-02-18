@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use auth::{AuthConfig, AuthState, Claims, UserProfile, roles::MemoryPflApiRole};
+use auth_pfl::{AuthConfig, AuthState, Claims, UserProfile, roles::MemoryPflApiRole};
 use axum::{
     Extension, Json, Router,
     extract::{FromRequestParts, Path, Query, State},
@@ -256,13 +256,13 @@ async fn main() {
         .route("/auth/me", get(me_handler))
         .layer(axum::middleware::from_fn_with_state(
             auth_state.clone(),
-            auth::auth_middleware,
+            auth_pfl::auth_middleware,
         ))
         .with_state(state);
 
     let app = Router::new()
         .merge(api)
-        .merge(auth::auth_routes(auth_state))
+        .merge(auth_pfl::auth_routes(auth_state))
         .fallback(get(static_handler));
 
     let port = std::env::var("PORT").expect("PORT must be set");

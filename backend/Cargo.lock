@@ -59,8 +59,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
-name = "auth"
-version = "0.1.0"
+name = "auth-pfl"
+version = "0.2.0"
+source = "git+ssh://git@github.com/nesso-pfl/auth-pfl?tag=v0.2.0#89827e57ca6b63d2a3dc80c0c26d1cff91defdef"
 dependencies = [
  "axum",
  "axum-extra",
@@ -72,7 +73,6 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tokio",
- "tracing",
  "urlencoding",
  "uuid",
 ]
@@ -162,7 +162,7 @@ dependencies = [
 name = "backend"
 version = "0.1.0"
 dependencies = [
- "auth",
+ "auth-pfl",
  "axum",
  "chrono",
  "mime_guess",
