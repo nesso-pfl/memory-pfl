@@ -9,13 +9,13 @@ RUN npm run build
 
 # Stage 2: Backend build
 FROM rust:1-bookworm AS backend-build
-RUN apt-get update && apt-get install -y --no-install-recommends openssh-client && rm -rf /var/lib/apt/lists/*
-RUN mkdir -p -m 0700 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
 WORKDIR /app/backend
 COPY .cargo/ ../.cargo/
 COPY backend/ .
 COPY --from=frontend-build /app/frontend/dist/ ../frontend/dist/
-RUN --mount=type=ssh cargo build --release
+RUN --mount=type=secret,id=github_token \
+    git config --global url."https://x-access-token:$(cat /run/secrets/github_token)@github.com/".insteadOf "ssh://git@github.com/" && \
+    cargo build --release
 
 # Stage 3: Runtime
 FROM debian:bookworm-slim

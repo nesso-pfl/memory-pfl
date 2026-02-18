@@ -241,6 +241,7 @@ async fn main() {
         .client_id(env("AUTH_CLIENT_ID"))
         .client_secret(env("AUTH_CLIENT_SECRET"))
         .redirect_uri(env("AUTH_REDIRECT_URI"))
+        .post_login_uri(env("AUTH_POST_LOGIN_URI"))
         .post_logout_uri(env("AUTH_POST_LOGOUT_URI"))
         .redis_url(env("AUTH_REDIS_URL"))
         .build()

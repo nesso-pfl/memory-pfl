@@ -6,4 +6,4 @@ start:
 
 # Build production Docker image
 build-image:
-    docker build --ssh default -t memory-pfl .
+    docker build --secret id=github_token,env=GITHUB_TOKEN -t memory-pfl .
