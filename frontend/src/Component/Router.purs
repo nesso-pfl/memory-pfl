@@ -24,7 +24,6 @@ import Page.TopPage (topPage)
 import Page.TopPage.Modal (modal)
 import Web.DOM.Element as DOMElement
 import Web.DOM.Node as Node
-import Web.Event.Event (Event)
 import Web.Event.Event as Event
 import Web.HTML (window)
 import Web.HTML.HTMLDocument as HTMLDocument
@@ -182,7 +181,7 @@ handleAction = case _ of
         tab <- H.gets _.tab
         tagsResult <- listTags (Just (toCategory tab))
         case tagsResult of
-          Right tags -> H.modify_ _ { allTags = tags }
+          Right ts -> H.modify_ _ { allTags = ts }
           Left _ -> pure unit
         handleAction FetchMemories
       Left err -> H.modify_ _ { submitting = false, submitError = Just err }

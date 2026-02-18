@@ -1,7 +1,5 @@
 module Component.Header where
 
-import Prelude
-
 import Component.Router.Types (Action(..), State)
 import Data.Maybe (Maybe(..))
 import Data.String.CodeUnits (take) as String
