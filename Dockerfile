@@ -5,20 +5,28 @@ WORKDIR /app/frontend
 COPY frontend/package.json ./
 RUN npm install
 ENV PATH="/app/frontend/node_modules/.bin:$PATH"
+COPY frontend/spago.yaml frontend/spago.lock ./
+RUN spago install
 COPY frontend/ .
-RUN spago install && npm run build
+RUN npm run build
 
-# Stage 2: Backend build
-FROM rust:1-bookworm AS backend-build
+# Stage 2: Backend dependency build
+FROM rust:1-bookworm AS backend-deps
 WORKDIR /app/backend
 COPY .cargo/ ../.cargo/
-COPY backend/ .
-COPY --from=frontend-build /app/frontend/dist/ ../frontend/dist/
+COPY backend/Cargo.toml backend/Cargo.lock ./
+RUN mkdir src && echo "" > src/lib.rs && echo "fn main(){}" > src/main.rs && mkdir -p src/bin && echo "fn main(){}" > src/bin/mcp.rs
 RUN --mount=type=secret,id=github_token \
     git config --global url."https://x-access-token:$(cat /run/secrets/github_token)@github.com/".insteadOf "ssh://git@github.com/" && \
     cargo build --release
 
-# Stage 3: Runtime
+# Stage 3: Backend build
+FROM backend-deps AS backend-build
+COPY backend/src ./src
+COPY --from=frontend-build /app/frontend/dist/ ../frontend/dist/
+RUN touch src/lib.rs src/main.rs src/bin/mcp.rs && cargo build --release
+
+# Stage 4: Runtime
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends libpq5 && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
