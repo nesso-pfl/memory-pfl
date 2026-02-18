@@ -4,8 +4,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /
 WORKDIR /app/frontend
 COPY frontend/package.json ./
 RUN npm install
+ENV PATH="/app/frontend/node_modules/.bin:$PATH"
 COPY frontend/ .
-RUN ./node_modules/.bin/spago install && npm run build
+RUN spago install && npm run build
 
 # Stage 2: Backend build
 FROM rust:1-bookworm AS backend-build
