@@ -11,7 +11,7 @@ Frontend (PureScript / Halogen, PWA)
     ↓ REST API
 Backend (Rust / Axum)
     ↓
-SQLite + Embedding Index
+PostgreSQL + pgvector
     ↑
 MCP Server (読み取り専用)
     ↑
@@ -20,9 +20,8 @@ MCP Server (読み取り専用)
 
 ## ストレージ
 
-- **SQLite** をメインデータベースとして採用
-- **Embedding index** によりセマンティック検索を実現（詳細: [semantic-search.md](semantic-search.md)）
-- 将来的に **pgvector** への移行を検討
+- **PostgreSQL + pgvector** をメインデータベースとして採用
+- **pgvector** によりセマンティック検索を実現（詳細: [semantic-search.md](semantic-search.md)）
 
 ## メモリモデル
 
@@ -84,7 +83,6 @@ just build-image
 ```
 docker run -d \
   --env-file .env \
-  -v /path/to/data:/app/data \
   -p 1230:1230 \
   memory-pfl
 ```
@@ -95,9 +93,6 @@ docker run -d \
 
 | 変数 | 必須 | 説明 |
 |------|------|------|
+| `DATABASE_URL` | Yes | PostgreSQL 接続 URL |
 | `GEMINI_API_KEY` | Yes | Google AI Studio の API キー |
 | `PORT` | Yes | 待ち受けポート |
-
-### データ永続化
-
-SQLite のデータは `/app/data/` に保存される。コンテナ削除時にデータが失われないよう、ホスト側のディレクトリをボリュームマウントすること。

@@ -17,8 +17,8 @@ RUN cargo build --release
 
 # Stage 3: Runtime
 FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends libpq5 && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-RUN mkdir data
 COPY --from=backend-build /app/backend/target/release/backend /usr/local/bin/backend
 EXPOSE 1230
 CMD ["backend"]

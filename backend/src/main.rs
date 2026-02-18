@@ -11,7 +11,7 @@ use axum::{
 use backend::embedding::GeminiClient;
 use backend::model::{Category, CreateMemory, UpdateMemory};
 use backend::repository;
-use backend::repository::sqlite::SqliteMemoryRepository;
+use backend::repository::postgres::PgMemoryRepository;
 use rust_embed::Embed;
 use serde::Deserialize;
 
@@ -45,7 +45,7 @@ async fn static_handler(uri: axum::http::Uri) -> Response {
 }
 
 struct AppStateInner {
-    repo: SqliteMemoryRepository,
+    repo: PgMemoryRepository,
     gemini: GeminiClient,
 }
 
@@ -226,22 +226,16 @@ async fn me_handler(Extension(profile): Extension<UserProfile>) -> Json<UserProf
 async fn main() {
     tracing_subscriber::fmt::init();
 
-    unsafe {
-        libsqlite3_sys::sqlite3_auto_extension(Some(std::mem::transmute(
-            sqlite_vec::sqlite3_vec_init as *const (),
-        )));
-    }
+    let env = |key: &str| std::env::var(key).unwrap_or_else(|_| panic!("{key} must be set"));
 
-    let repo = SqliteMemoryRepository::new("sqlite:data/memories.db?mode=rwc")
+    let repo = PgMemoryRepository::new(&env("DATABASE_URL"))
         .await
         .expect("failed to initialize database");
 
-    let api_key = std::env::var("GEMINI_API_KEY").expect("GEMINI_API_KEY must be set");
+    let api_key = env("GEMINI_API_KEY");
     let gemini = GeminiClient::new(api_key);
 
     let state: AppState = Arc::new(AppStateInner { repo, gemini });
-
-    let env = |key: &str| std::env::var(key).unwrap_or_else(|_| panic!("{key} must be set"));
     let auth_config = AuthConfig::builder()
         .issuer_url(env("AUTH_ISSUER_URL"))
         .client_id(env("AUTH_CLIENT_ID"))

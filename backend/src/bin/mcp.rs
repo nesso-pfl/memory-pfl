@@ -1,7 +1,7 @@
 use backend::embedding::GeminiClient;
 use backend::model::Category;
 use backend::repository::MemoryRepository;
-use backend::repository::sqlite::SqliteMemoryRepository;
+use backend::repository::postgres::PgMemoryRepository;
 use rmcp::handler::server::router::tool::ToolRouter;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::*;
@@ -10,7 +10,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 struct MemoryServer {
-    repo: SqliteMemoryRepository,
+    repo: PgMemoryRepository,
     gemini: GeminiClient,
     tool_router: ToolRouter<Self>,
 }
@@ -29,7 +29,7 @@ struct SearchMemoriesInput {
 
 #[tool_router]
 impl MemoryServer {
-    fn new(repo: SqliteMemoryRepository, gemini: GeminiClient) -> Self {
+    fn new(repo: PgMemoryRepository, gemini: GeminiClient) -> Self {
         Self {
             repo,
             gemini,
@@ -83,17 +83,13 @@ impl ServerHandler for MemoryServer {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    unsafe {
-        libsqlite3_sys::sqlite3_auto_extension(Some(std::mem::transmute(
-            sqlite_vec::sqlite3_vec_init as *const (),
-        )));
-    }
+    let env = |key: &str| std::env::var(key).unwrap_or_else(|_| panic!("{key} must be set"));
 
-    let repo = SqliteMemoryRepository::new("sqlite:data/memories.db?mode=rwc")
+    let repo = PgMemoryRepository::new(&env("DATABASE_URL"))
         .await
         .expect("failed to initialize database");
 
-    let api_key = std::env::var("GEMINI_API_KEY").expect("GEMINI_API_KEY must be set");
+    let api_key = env("GEMINI_API_KEY");
     let gemini = GeminiClient::new(api_key);
 
     let server = MemoryServer::new(repo, gemini);
