@@ -3,14 +3,25 @@ services:
     build: .
     ports:
       - "${PORT}:1230"
-    volumes:
-      - data:/data
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://memory_pfl:${POSTGRES_PASSWORD}@db:5432/memory_pfl
 
-  # MCP Server（未実装・実装後に有効化）
-  # mcp-server:
-  #   build: ...
-  #   depends_on:
-  #     - app
+  db:
+    image: pgvector/pgvector:pg17
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: memory_pfl
+      POSTGRES_USER: memory_pfl
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U memory_pfl"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  data:
+  db-data:
