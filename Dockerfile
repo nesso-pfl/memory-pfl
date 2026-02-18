@@ -5,7 +5,7 @@ WORKDIR /app/frontend
 COPY frontend/package.json ./
 RUN npm install
 COPY frontend/ .
-RUN npm run build
+RUN ./node_modules/.bin/spago install && npm run build
 
 # Stage 2: Backend build
 FROM rust:1-bookworm AS backend-build
