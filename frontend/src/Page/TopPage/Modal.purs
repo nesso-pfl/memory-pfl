@@ -17,7 +17,7 @@ modal state =
     [ HP.classes [ H.ClassName "fixed inset-0 z-50 flex items-end sm:items-center justify-center" ] ]
     [ HH.div
         [ HE.onClick \_ -> CloseModal
-        , HP.classes [ H.ClassName "absolute inset-0 bg-black/40 backdrop-blur-sm" ]
+        , HP.classes [ H.ClassName "absolute inset-0 bg-black/40" ]
         ]
         []
     , HH.div

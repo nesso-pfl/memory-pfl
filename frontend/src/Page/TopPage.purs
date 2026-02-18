@@ -25,7 +25,7 @@ topPage state =
 resultList :: forall slots m. State -> H.ComponentHTML Action slots m
 resultList state =
   HH.div
-    [ HP.classes [ H.ClassName "flex-1 px-5 py-4 flex flex-col gap-3" ] ]
+    [ HP.classes [ H.ClassName "flex-1 px-5 py-4 flex flex-col gap-3 bg-gray-50" ] ]
     ( filterBadge <> content )
   where
   filterBadge = case state.filterTag of
@@ -55,6 +55,6 @@ fab :: forall slots m. H.ComponentHTML Action slots m
 fab =
   HH.button
     [ HE.onClick \_ -> OpenModal
-    , HP.classes [ H.ClassName "fixed bottom-6 right-6 w-14 h-14 bg-gray-800 hover:bg-gray-700 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 text-2xl flex items-center justify-center" ]
+    , HP.classes [ H.ClassName "fixed bottom-6 right-6 w-14 h-14 bg-gray-800 hover:bg-gray-700 text-white rounded-full shadow-lg text-2xl flex items-center justify-center" ]
     ]
     [ HH.text "＋" ]

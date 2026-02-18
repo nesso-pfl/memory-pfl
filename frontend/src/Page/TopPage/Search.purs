@@ -88,7 +88,7 @@ searchBar state =
     , HH.button
         [ HE.onClick \_ -> SubmitSearch
         , HP.disabled (state.searching || String.null state.searchQuery)
-        , HP.classes [ H.ClassName "w-10 h-10 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-xl disabled:opacity-40 disabled:hover:bg-blue-500" ]
+        , HP.classes [ H.ClassName "w-10 h-10 flex items-center justify-center bg-black/80 hover:bg-black/60 text-white rounded-xl disabled:opacity-40 disabled:hover:bg-black/80" ]
         ]
         [ searchIcon ]
     ]

@@ -7,7 +7,7 @@ import Halogen.HTML.Properties as HP
 footer :: forall w i. HH.HTML w i
 footer =
   HH.footer
-    [ HP.classes [ H.ClassName "py-4 text-center text-xs text-gray-300" ] ]
+    [ HP.classes [ H.ClassName "py-4 text-center text-xs text-gray-400" ] ]
     [ HH.text "developed by "
     , HH.a
         [ HP.href "https://github.com/nesso-pfl"
