@@ -40,13 +40,15 @@ modal state =
               [ HP.classes [ H.ClassName "text-lg font-bold text-gray-900" ] ]
               [ HH.text if isJust state.editingId then "メモリを編集" else "メモリを作成" ]
           , HH.textarea
-              [ HP.placeholder "内容を入力..."
+              [ HP.name "content"
+              , HP.placeholder "内容を入力..."
               , HP.value state.formContent
               , HE.onValueInput SetFormContent
               , HP.classes [ H.ClassName "w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300 resize-none h-32" ]
               ]
           , HH.input
               [ HP.type_ HP.InputText
+              , HP.name "tags"
               , HP.placeholder "タグ（カンマ区切り）"
               , HP.value state.formTags
               , HE.onValueInput SetFormTags

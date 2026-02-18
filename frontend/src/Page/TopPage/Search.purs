@@ -45,6 +45,7 @@ tagSearch state =
     ]
     ( [ HH.input
           [ HP.type_ HP.InputText
+          , HP.name "tag"
           , HP.placeholder "タグで検索..."
           , HP.value state.tagInput
           , HE.onValueInput SetTagInput
@@ -80,6 +81,7 @@ searchBar state =
     [ HP.classes [ H.ClassName "px-5 pt-2 pb-3 flex gap-2 border-b border-gray-200" ] ]
     [ HH.input
         [ HP.type_ HP.InputText
+        , HP.name "query"
         , HP.placeholder "キーワードで検索..."
         , HP.value state.searchQuery
         , HE.onValueInput SetSearchQuery
