@@ -1,6 +1,6 @@
 # Stage 1: Frontend build
 FROM node:24-slim AS frontend-build
-RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/frontend
 COPY frontend/package.json ./
 RUN npm install
