@@ -28,7 +28,7 @@ RUN touch src/lib.rs src/main.rs src/bin/mcp.rs && cargo build --release
 
 # Stage 4: Runtime
 FROM debian:bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends libpq5 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends libpq5 ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=backend-build /app/backend/target/release/backend /usr/local/bin/backend
 EXPOSE 1230
