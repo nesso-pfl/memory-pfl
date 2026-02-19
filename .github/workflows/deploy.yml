@@ -24,27 +24,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Save image
-        run: docker save memory-pfl:latest | gzip > /tmp/memory-pfl.tar.gz
+      - name: Transfer image and deploy
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Transfer image to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_NAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: /tmp/memory-pfl.tar.gz
-          target: ${{ vars.DEPLOY_PATH }}
-          strip_components: 1
-
-      - name: Load and start on VPS
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_NAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd ${{ vars.DEPLOY_PATH }}
-            docker load < memory-pfl.tar.gz
-            rm memory-pfl.tar.gz
-            docker compose up -d memory-pfl
+          docker save memory-pfl:latest | gzip | ssh -i ~/.ssh/id_ed25519 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "docker load && cd ${{ vars.DEPLOY_PATH }} && docker compose up -d memory-pfl"
