@@ -7,8 +7,8 @@ Docker イメージは GitHub Actions で自動ビルドされ、VPS に転送�
 main ブランチへの push 時に `.github/workflows/deploy.yml` が実行される:
 
 1. Docker イメージをビルド
-2. tarball に圧縮して VPS に SCP 転送
-3. VPS で `docker load` → `docker compose up -d memory-pfl`
+2. SSH 経由で `docker save | gzip | docker load` で VPS に転送
+3. VPS で `docker compose up -d memory-pfl`
 
 ### GitHub Actions の設定
 
@@ -19,7 +19,7 @@ main ブランチへの push 時に `.github/workflows/deploy.yml` が実行さ�
 | `GH_PAT` | GitHub PAT（auth-pfl の取得用、`Contents: Read-only`） |
 | `SSH_PRIVATE_KEY` | VPS 接続用の SSH 秘密鍵 |
 | `VPS_HOST` | VPS のホスト |
-| `VPS_NAME` | VPS の SSH ユーザー名 |
+| `VPS_USER` | VPS の SSH ユーザー名 |
 
 **Variables:**
 
