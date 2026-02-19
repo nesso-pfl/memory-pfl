@@ -2,8 +2,8 @@
   "name": "frontend",
   "private": true,
   "scripts": {
-    "build": "spago bundle --bundle-type app --outfile dist/app.js && cp -r public/. dist/ && tailwindcss -i src/styles.css -o dist/styles.css --minify",
-    "build:purs": "spago bundle --bundle-type app --outfile dist/app.js",
+    "build": "spago bundle --bundle-type app --minify --outfile dist/app.js && cp -r public/. dist/ && tailwindcss -i src/styles.css -o dist/styles.css --minify",
+    "build:purs": "spago bundle --bundle-type app --minify --outfile dist/app.js",
     "watch:css": "tailwindcss -i src/styles.css -o dist/styles.css --watch"
   },
   "devDependencies": {
