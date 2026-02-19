@@ -14,7 +14,8 @@ use backend::repository;
 use backend::repository::postgres::PgMemoryRepository;
 use rust_embed::Embed;
 use serde::Deserialize;
-use tower_http::trace::TraceLayer;
+use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
+use tracing::Level;
 
 #[derive(Embed)]
 #[folder = "../frontend/dist/"]
@@ -268,7 +269,11 @@ async fn main() {
         .merge(api)
         .merge(auth_pfl::auth_routes(auth_state))
         .fallback(get(static_handler))
-        .layer(TraceLayer::new_for_http());
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                .on_response(DefaultOnResponse::new().level(Level::INFO)),
+        );
 
     let port = std::env::var("PORT").expect("PORT must be set");
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await.unwrap();
