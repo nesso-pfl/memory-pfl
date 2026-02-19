@@ -1,34 +1,43 @@
 # デプロイ
 
-Docker イメージは GitHub Actions で自動ビルドされ、ghcr.io にプッシュされる。
+Docker イメージは GitHub Actions で自動ビルドされ、VPS に転送・起動される。
 
 ## CI/CD
 
-main ブランチへの push 時に `.github/workflows/release.yml` が実行される:
+main ブランチへの push 時に `.github/workflows/deploy.yml` が実行される:
 
 1. Docker イメージをビルド
-2. `ghcr.io/nesso-pfl/memory-pfl:latest` および `:sha` タグでプッシュ
+2. tarball に圧縮して VPS に SCP 転送
+3. VPS で `docker load` → `docker compose up -d memory-pfl`
 
-## 前提
+### GitHub Actions の設定
 
+**Secrets:**
+
+| 名前 | 説明 |
+|------|------|
+| `GH_PAT` | GitHub PAT（auth-pfl の取得用、`Contents: Read-only`） |
+| `SSH_PRIVATE_KEY` | VPS 接続用の SSH 秘密鍵 |
+| `VPS_HOST` | VPS のホスト |
+| `VPS_NAME` | VPS の SSH ユーザー名 |
+
+**Variables:**
+
+| 名前 | 説明 |
+|------|------|
+| `DEPLOY_PATH` | VPS 上の compose.yaml があるディレクトリ |
+
+## VPS の前提
+
+- Docker + Docker Compose がインストール済み
+- `DEPLOY_PATH` に compose.yaml があり、`memory-pfl` サービスが定義されている
 - PostgreSQL + pgvector が稼働していること
 - Redis が稼働していること（認証セッション管理用）
 - Keycloak 等の OIDC プロバイダが設定済みであること
 
-## 実行
-
-```
-docker pull ghcr.io/nesso-pfl/memory-pfl:latest
-
-docker run -d \
-  --env-file .env \
-  -p 1230:1230 \
-  ghcr.io/nesso-pfl/memory-pfl:latest
-```
-
 ## 環境変数
 
-`.env.example` を参照。
+VPS 上の `.env` に設定する。`.env.example` を参照。
 
 | 変数 | 必須 | 説明 |
 |------|------|------|
