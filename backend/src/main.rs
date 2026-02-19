@@ -14,6 +14,7 @@ use backend::repository;
 use backend::repository::postgres::PgMemoryRepository;
 use rust_embed::Embed;
 use serde::Deserialize;
+use tower_http::trace::TraceLayer;
 
 #[derive(Embed)]
 #[folder = "../frontend/dist/"]
@@ -57,10 +58,11 @@ impl<S: Send + Sync> FromRequestParts<S> for RequireRead {
     type Rejection = StatusCode;
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         let claims = parts.extensions.get::<Claims>().ok_or(StatusCode::UNAUTHORIZED)?;
-        claims
-            .has_role(&MemoryPflApiRole::Read)
-            .then_some(Self)
-            .ok_or(StatusCode::FORBIDDEN)
+        if !claims.has_role(&MemoryPflApiRole::Read) {
+            tracing::warn!(sub = %claims.sub, "read permission denied");
+            return Err(StatusCode::FORBIDDEN);
+        }
+        Ok(Self)
     }
 }
 
@@ -70,10 +72,11 @@ impl<S: Send + Sync> FromRequestParts<S> for RequireWrite {
     type Rejection = StatusCode;
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         let claims = parts.extensions.get::<Claims>().ok_or(StatusCode::UNAUTHORIZED)?;
-        claims
-            .has_role(&MemoryPflApiRole::Write)
-            .then_some(Self)
-            .ok_or(StatusCode::FORBIDDEN)
+        if !claims.has_role(&MemoryPflApiRole::Write) {
+            tracing::warn!(sub = %claims.sub, "write permission denied");
+            return Err(StatusCode::FORBIDDEN);
+        }
+        Ok(Self)
     }
 }
 
@@ -90,7 +93,7 @@ async fn list_memories(
         return match state.repo.list(params.category, params.tag, limit, offset).await {
             Ok(memories) => Json(memories).into_response(),
             Err(e) => {
-                eprintln!("list_memories error: {e}");
+                tracing::error!("list_memories error: {e}");
                 StatusCode::INTERNAL_SERVER_ERROR.into_response()
             }
         };
@@ -99,7 +102,7 @@ async fn list_memories(
     let embedding = match state.gemini.embed(&params.q, "RETRIEVAL_QUERY").await {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("embedding error: {e}");
+            tracing::error!("embedding error: {e}");
             return StatusCode::INTERNAL_SERVER_ERROR.into_response();
         }
     };
@@ -107,7 +110,7 @@ async fn list_memories(
     match state.repo.search(embedding, 20, params.category).await {
         Ok(memories) => Json(memories).into_response(),
         Err(e) => {
-            eprintln!("search_memories error: {e}");
+            tracing::error!("search_memories error: {e}");
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
     }
@@ -119,7 +122,7 @@ async fn get_memory(_: RequireRead, State(state): State<AppState>, Path(id): Pat
         Ok(memory) => Json(memory).into_response(),
         Err(repository::RepositoryError::NotFound) => StatusCode::NOT_FOUND.into_response(),
         Err(e) => {
-            eprintln!("get_memory error: {e}");
+            tracing::error!("get_memory error: {e}");
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
     }
@@ -135,7 +138,7 @@ async fn create_memory(
     let embedding = match state.gemini.embed(&input.content, "RETRIEVAL_DOCUMENT").await {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("embedding error: {e}");
+            tracing::error!("embedding error: {e}");
             return StatusCode::INTERNAL_SERVER_ERROR.into_response();
         }
     };
@@ -143,7 +146,7 @@ async fn create_memory(
     match state.repo.create(input, embedding).await {
         Ok(memory) => (StatusCode::CREATED, Json(memory)).into_response(),
         Err(e) => {
-            eprintln!("create_memory error: {e}");
+            tracing::error!("create_memory error: {e}");
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
     }
@@ -160,7 +163,7 @@ async fn update_memory(
         Ok(memory) => Json(memory).into_response(),
         Err(repository::RepositoryError::NotFound) => StatusCode::NOT_FOUND.into_response(),
         Err(e) => {
-            eprintln!("update_memory error: {e}");
+            tracing::error!("update_memory error: {e}");
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
     }
@@ -172,7 +175,7 @@ async fn delete_memory(_: RequireWrite, State(state): State<AppState>, Path(id):
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
         Err(repository::RepositoryError::NotFound) => StatusCode::NOT_FOUND.into_response(),
         Err(e) => {
-            eprintln!("delete_memory error: {e}");
+            tracing::error!("delete_memory error: {e}");
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
     }
@@ -212,7 +215,7 @@ async fn list_tags(
     match state.repo.list_tags(params.category).await {
         Ok(tags) => Json(tags).into_response(),
         Err(e) => {
-            eprintln!("list_tags error: {e}");
+            tracing::error!("list_tags error: {e}");
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
     }
@@ -264,7 +267,8 @@ async fn main() {
     let app = Router::new()
         .merge(api)
         .merge(auth_pfl::auth_routes(auth_state))
-        .fallback(get(static_handler));
+        .fallback(get(static_handler))
+        .layer(TraceLayer::new_for_http());
 
     let port = std::env::var("PORT").expect("PORT must be set");
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await.unwrap();
