@@ -1,27 +1,44 @@
 name: Deploy
 
 on:
-  workflow_run:
-    workflows: [Release]
-    types: [completed]
+  push:
     branches: [main]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
 
     steps:
-      - uses: appleboy/ssh-action@v1
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: memory-pfl:latest
+          secrets: |
+            github_token=${{ secrets.GH_PAT }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Save and transfer image
+        run: |
+          docker save memory-pfl:latest | gzip > /tmp/memory-pfl.tar.gz
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id
+          chmod 600 ~/.ssh/id
+          scp -o StrictHostKeyChecking=accept-new -i ~/.ssh/id /tmp/memory-pfl.tar.gz ${{ secrets.VPS_NAME }}@${{ secrets.VPS_HOST }}:${{ vars.DEPLOY_PATH }}/memory-pfl.tar.gz
+
+      - name: Load and start on VPS
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_NAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: GHCR_TOKEN
           script: |
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
             cd ${{ vars.DEPLOY_PATH }}
-            docker compose pull memory-pfl
+            docker load < memory-pfl.tar.gz
+            rm memory-pfl.tar.gz
             docker compose up -d memory-pfl
-        env:
-          GHCR_TOKEN: ${{ secrets.GH_PAT }}
