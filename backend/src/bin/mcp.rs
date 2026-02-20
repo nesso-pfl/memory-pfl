@@ -1,3 +1,4 @@
+use self_update::cargo_crate_version;
 use reqwest::Client;
 use rmcp::handler::server::router::tool::ToolRouter;
 use rmcp::handler::server::wrapper::Parameters;
@@ -101,14 +102,39 @@ impl ServerHandler for MemoryServer {
                 version: "0.1.0".into(),
                 ..Default::default()
             },
-            instructions: Some("Read-only access to memory-pfl data".into()),
+            instructions: Some(format!(
+                "Read-only access to memory-pfl data (v{})",
+                cargo_crate_version!()
+            )),
             ..Default::default()
         }
     }
 }
 
+fn self_update() {
+    let result = self_update::backends::github::Update::configure()
+        .repo_owner("nesso-pfl")
+        .repo_name("memory-pfl")
+        .bin_name("mcp")
+        .current_version(cargo_crate_version!())
+        .no_confirm(true)
+        .build()
+        .and_then(|u| u.update());
+
+    match result {
+        Ok(status) => {
+            if status.updated() {
+                eprintln!("Updated to {}", status.version());
+            }
+        }
+        Err(e) => eprintln!("Update check failed: {e}"),
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    self_update();
+
     let env = |key: &str| std::env::var(key).unwrap_or_else(|_| panic!("{key} must be set"));
 
     let base_url = env("MCP_BASE_URL");
