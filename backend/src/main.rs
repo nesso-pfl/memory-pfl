@@ -14,6 +14,7 @@ use backend::repository;
 use backend::repository::postgres::PgMemoryRepository;
 use rust_embed::Embed;
 use serde::Deserialize;
+use tower_http::compression::CompressionLayer;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 use tracing::Level;
 
@@ -269,6 +270,7 @@ async fn main() {
         .merge(api)
         .merge(auth_pfl::auth_routes(auth_state))
         .fallback(get(static_handler))
+        .layer(CompressionLayer::new())
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
