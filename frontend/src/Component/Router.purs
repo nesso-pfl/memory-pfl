@@ -84,12 +84,15 @@ handleAction = case _ of
     void $ H.subscribe $ HQE.eventListener EventTypes.click (HTMLDocument.toEventTarget doc) (Just <<< DocumentClick)
   FetchMemories -> do
     state <- H.get
-    H.modify_ _ { searching = not (String.null state.searchQuery) }
-    result <- listMemories { q: state.searchQuery, category: Just (toCategory state.tab), tag: state.filterTag, page: Nothing, limit: Nothing }
-    H.modify_ _ { searching = false }
-    case result of
-      Right memories -> H.modify_ _ { memories = memories }
-      Left _ -> pure unit
+    case state.profile of
+      Nothing -> pure unit
+      Just _ -> do
+        H.modify_ _ { searching = not (String.null state.searchQuery) }
+        result <- listMemories { q: state.searchQuery, category: Just (toCategory state.tab), tag: state.filterTag, page: Nothing, limit: Nothing }
+        H.modify_ _ { searching = false }
+        case result of
+          Right memories -> H.modify_ _ { memories = memories }
+          Left _ -> pure unit
   SetTab tab -> do
     state <- H.get
     replaceRoute (Home { tab: Just (toCategory tab), tag: state.filterTag })
@@ -199,9 +202,13 @@ handleQuery (Navigate route a) = do
         , filterTag: p.tag
         }
   H.modify_ _ { route = Just route, tab = tab, filterTag = filterTag, tagInput = "", searchQuery = "" }
-  tagsResult <- listTags (Just (toCategory tab))
-  case tagsResult of
-    Right tags -> H.modify_ _ { allTags = tags }
-    Left _ -> pure unit
-  handleAction FetchMemories
+  state <- H.get
+  case state.profile of
+    Nothing -> pure unit
+    Just _ -> do
+      tagsResult <- listTags (Just (toCategory tab))
+      case tagsResult of
+        Right tags -> H.modify_ _ { allTags = tags }
+        Left _ -> pure unit
+      handleAction FetchMemories
   pure (Just a)
