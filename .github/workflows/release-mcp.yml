@@ -1,0 +1,43 @@
+name: Release MCP
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: aarch64-apple-darwin
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure git for private deps
+        run: git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "ssh://git@github.com/"
+
+      - run: rustup target add ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --bin mcp --target ${{ matrix.target }}
+        working-directory: backend
+
+      - name: Package
+        run: |
+          version="${GITHUB_REF_NAME}"
+          asset="mcp-${version}-${{ matrix.target }}.tar.gz"
+          tar czf "$asset" -C backend/target/${{ matrix.target }}/release mcp
+          echo "ASSET=$asset" >> "$GITHUB_ENV"
+
+      - name: Upload
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ASSET }}
