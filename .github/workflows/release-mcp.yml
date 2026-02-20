@@ -71,13 +71,13 @@ jobs:
       - run: rustup target add ${{ matrix.target }}
 
       - name: Build
-        run: cargo build --release --bin mcp --target ${{ matrix.target }}
+        run: cargo build --release --bin memory-pfl-mcp --target ${{ matrix.target }}
         working-directory: backend
 
       - name: Package
         run: |
-          asset="mcp-v${{ needs.release.outputs.version }}-${{ matrix.target }}.tar.gz"
-          tar czf "$asset" -C backend/target/${{ matrix.target }}/release mcp
+          asset="memory-pfl-mcp-v${{ needs.release.outputs.version }}-${{ matrix.target }}.tar.gz"
+          tar czf "$asset" -C backend/target/${{ matrix.target }}/release memory-pfl-mcp
           echo "ASSET=$asset" >> "$GITHUB_ENV"
 
       - name: Upload

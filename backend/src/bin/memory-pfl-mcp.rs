@@ -115,7 +115,7 @@ fn self_update() {
     let result = self_update::backends::github::Update::configure()
         .repo_owner("nesso-pfl")
         .repo_name("memory-pfl")
-        .bin_name("mcp")
+        .bin_name("memory-pfl-mcp")
         .current_version(cargo_crate_version!())
         .no_confirm(true)
         .build()
