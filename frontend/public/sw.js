@@ -1,1 +1,1 @@
-self.addEventListener("fetch", function () {});
+// Service worker for PWA installability
