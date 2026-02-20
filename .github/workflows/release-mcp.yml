@@ -44,7 +44,7 @@ jobs:
           echo "version=${NEW}" >> "$GITHUB_OUTPUT"
 
       - name: Update lockfile
-        run: cargo generate-lockfile
+        run: cargo check
         working-directory: backend
 
       - name: Commit and tag
