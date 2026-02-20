@@ -23,6 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Configure git for private deps
+        run: git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "ssh://git@github.com/"
+
       - name: Bump version
         id: version
         run: |
@@ -40,11 +43,15 @@ jobs:
           sed -i "s/^version = \"${CURRENT}\"/version = \"${NEW}\"/" "$CARGO_TOML"
           echo "version=${NEW}" >> "$GITHUB_OUTPUT"
 
+      - name: Update lockfile
+        run: cargo generate-lockfile
+        working-directory: backend
+
       - name: Commit and tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add backend/Cargo.toml
+          git add backend/Cargo.toml backend/Cargo.lock
           git commit -m "Release v${{ steps.version.outputs.version }}"
           git tag "v${{ steps.version.outputs.version }}"
           git push origin main --tags
