@@ -26,9 +26,11 @@ fn serve_asset(path: &str) -> Response {
     match Assets::get(path) {
         Some(file) => {
             let mime = mime_guess::from_path(path).first_or_octet_stream();
-            let cache_control = match path {
-                "sw.js" | "manifest.json" => "no-cache",
-                _ => "public, max-age=86400",
+            let has_hash = path.bytes().filter(|&b| b == b'.').count() >= 2;
+            let cache_control = if has_hash {
+                "public, max-age=31536000, immutable"
+            } else {
+                "no-cache"
             };
             ([
                 (header::CONTENT_TYPE, mime.as_ref()),
