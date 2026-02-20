@@ -70,6 +70,11 @@ jobs:
 
       - run: rustup target add ${{ matrix.target }}
 
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend -> target
+          key: ${{ matrix.target }}
+
       - name: Build
         run: cargo build --release --bin memory-pfl-mcp --target ${{ matrix.target }}
         working-directory: backend
