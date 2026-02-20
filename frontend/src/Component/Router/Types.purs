@@ -20,6 +20,7 @@ type State =
   , tagFocused :: Boolean
   , filterTag :: Maybe String
   , searchQuery :: String
+  , loading :: Boolean
   , searching :: Boolean
   , confirmingDelete :: Maybe String
   , showModal :: Boolean

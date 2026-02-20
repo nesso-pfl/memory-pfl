@@ -8,6 +8,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Html.Icons (loaderIcon)
 import Page.TopPage.MemoryCard (memoryCard)
 import Page.TopPage.Search (tabControl, tagSearch, searchBar)
 
@@ -44,6 +45,11 @@ resultList state =
       ]
     Nothing -> []
   content
+    | state.loading && state.memories == [] =
+        [ HH.div
+            [ HP.classes [ H.ClassName "flex justify-center mt-12 text-gray-400" ] ]
+            [ loaderIcon ]
+        ]
     | state.memories == [] =
         [ HH.p
             [ HP.classes [ H.ClassName "text-sm text-gray-400 text-center mt-12" ] ]

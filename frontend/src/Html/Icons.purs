@@ -66,6 +66,18 @@ trashIcon =
     , svgElement (H.ElemName "line") [ HP.attr (H.AttrName "x1") "14", HP.attr (H.AttrName "x2") "14", HP.attr (H.AttrName "y1") "11", HP.attr (H.AttrName "y2") "17" ] []
     ]
 
+loaderIcon :: forall w i. HH.HTML w i
+loaderIcon =
+  svgElement (H.ElemName "svg")
+    [ HP.attr (H.AttrName "viewBox") "0 0 24 24"
+    , HP.attr (H.AttrName "fill") "none"
+    , HP.attr (H.AttrName "stroke") "currentColor"
+    , HP.attr (H.AttrName "stroke-width") "2"
+    , HP.attr (H.AttrName "stroke-linecap") "round"
+    , HP.attr (H.AttrName "class") "w-8 h-8 animate-spin"
+    ]
+    [ svgElement (H.ElemName "path") [ HP.attr (H.AttrName "d") "M21 12a9 9 0 1 1-6.219-8.56" ] [] ]
+
 logoutIcon :: forall w i. HH.HTML w i
 logoutIcon =
   svgElement (H.ElemName "svg")

@@ -45,6 +45,7 @@ component = H.mkComponent
       , tagFocused: false
       , filterTag: Nothing
       , searchQuery: ""
+      , loading: true
       , searching: false
       , confirmingDelete: Nothing
       , showModal: false
@@ -94,9 +95,9 @@ handleAction = case _ of
         case Object.lookup key state.memoriesCache of
           Just cached -> H.modify_ _ { memories = cached }
           Nothing -> pure unit
-        H.modify_ _ { searching = not (String.null state.searchQuery) }
+        H.modify_ _ { loading = true, searching = not (String.null state.searchQuery) }
         result <- listMemories { q: state.searchQuery, category: Just (toCategory state.tab), tag: state.filterTag, page: Nothing, limit: Nothing }
-        H.modify_ _ { searching = false }
+        H.modify_ _ { loading = false, searching = false }
         case result of
           Right memories -> H.modify_ \s -> s { memories = memories, memoriesCache = Object.insert key memories s.memoriesCache }
           Left _ -> pure unit
@@ -211,7 +212,7 @@ handleQuery (Navigate route a) = do
   H.modify_ _ { route = Just route, tab = tab, filterTag = filterTag, tagInput = "", searchQuery = "" }
   state <- H.get
   case state.profile of
-    Nothing -> pure unit
+    Nothing -> H.modify_ _ { loading = false }
     Just _ -> do
       let mKey = toCategory tab <> "|" <> fromMaybe "" filterTag <> "|"
       let tKey = toCategory tab
