@@ -5,6 +5,7 @@ import Data.Memory (Memory)
 import Data.Route (Route)
 import Data.Tab (Tab)
 import Data.User (UserProfile)
+import Foreign.Object (Object)
 import Web.Event.Event (Event)
 
 type State =
@@ -13,6 +14,8 @@ type State =
   , profile :: Maybe UserProfile
   , memories :: Array Memory
   , allTags :: Array String
+  , memoriesCache :: Object (Array Memory)
+  , tagsCache :: Object (Array String)
   , tagInput :: String
   , tagFocused :: Boolean
   , filterTag :: Maybe String

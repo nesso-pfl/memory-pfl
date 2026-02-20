@@ -10,6 +10,7 @@ import Component.Header (header)
 import Component.Router.Types (Action(..), Query(..), State)
 import Data.Array (filter) as Array
 import Data.Either (Either(..))
+import Foreign.Object as Object
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Route (Route(..))
 import Data.String.Common (split, trim, null, joinWith) as String
@@ -38,6 +39,8 @@ component = H.mkComponent
       , profile: Nothing
       , memories: []
       , allTags: []
+      , memoriesCache: Object.empty
+      , tagsCache: Object.empty
       , tagInput: ""
       , tagFocused: false
       , filterTag: Nothing
@@ -87,11 +90,15 @@ handleAction = case _ of
     case state.profile of
       Nothing -> pure unit
       Just _ -> do
+        let key = toCategory state.tab <> "|" <> fromMaybe "" state.filterTag <> "|" <> state.searchQuery
+        case Object.lookup key state.memoriesCache of
+          Just cached -> H.modify_ _ { memories = cached }
+          Nothing -> pure unit
         H.modify_ _ { searching = not (String.null state.searchQuery) }
         result <- listMemories { q: state.searchQuery, category: Just (toCategory state.tab), tag: state.filterTag, page: Nothing, limit: Nothing }
         H.modify_ _ { searching = false }
         case result of
-          Right memories -> H.modify_ _ { memories = memories }
+          Right memories -> H.modify_ \s -> s { memories = memories, memoriesCache = Object.insert key memories s.memoriesCache }
           Left _ -> pure unit
   SetTab tab -> do
     state <- H.get
@@ -148,7 +155,7 @@ handleAction = case _ of
             handleAction FetchMemories
             tagsResult <- listTags (Just (toCategory state.tab))
             case tagsResult of
-              Right tags -> H.modify_ _ { allTags = tags }
+              Right tags -> H.modify_ \s -> s { allTags = tags, tagsCache = Object.insert (toCategory s.tab) tags s.tagsCache }
               Left _ -> pure unit
           Left _ -> pure unit
       Nothing -> pure unit
@@ -184,7 +191,7 @@ handleAction = case _ of
         tab <- H.gets _.tab
         tagsResult <- listTags (Just (toCategory tab))
         case tagsResult of
-          Right ts -> H.modify_ _ { allTags = ts }
+          Right ts -> H.modify_ \s -> s { allTags = ts, tagsCache = Object.insert (toCategory tab) ts s.tagsCache }
           Left _ -> pure unit
         handleAction FetchMemories
       Left err -> H.modify_ _ { submitting = false, submitError = Just err }
@@ -206,9 +213,16 @@ handleQuery (Navigate route a) = do
   case state.profile of
     Nothing -> pure unit
     Just _ -> do
+      let mKey = toCategory tab <> "|" <> fromMaybe "" filterTag <> "|"
+      let tKey = toCategory tab
+      case Object.lookup mKey state.memoriesCache, Object.lookup tKey state.tagsCache of
+        Just mCached, Just tCached -> H.modify_ _ { memories = mCached, allTags = tCached }
+        Just mCached, Nothing -> H.modify_ _ { memories = mCached }
+        Nothing, Just tCached -> H.modify_ _ { memories = [], allTags = tCached }
+        Nothing, Nothing -> H.modify_ _ { memories = [] }
       tagsResult <- listTags (Just (toCategory tab))
       case tagsResult of
-        Right tags -> H.modify_ _ { allTags = tags }
+        Right tags -> H.modify_ \s -> s { allTags = tags, tagsCache = Object.insert tKey tags s.tagsCache }
         Left _ -> pure unit
       handleAction FetchMemories
   pure (Just a)
