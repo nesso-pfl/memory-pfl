@@ -26,7 +26,14 @@ fn serve_asset(path: &str) -> Response {
     match Assets::get(path) {
         Some(file) => {
             let mime = mime_guess::from_path(path).first_or_octet_stream();
-            ([(header::CONTENT_TYPE, mime.as_ref())], file.data).into_response()
+            let cache_control = match path {
+                "sw.js" | "manifest.json" => "no-cache",
+                _ => "public, max-age=86400",
+            };
+            ([
+                (header::CONTENT_TYPE, mime.as_ref()),
+                (header::CACHE_CONTROL, cache_control),
+            ], file.data).into_response()
         }
         None => serve_index(),
     }
@@ -34,7 +41,10 @@ fn serve_asset(path: &str) -> Response {
 
 fn serve_index() -> Response {
     match Assets::get("index.html") {
-        Some(file) => ([(header::CONTENT_TYPE, "text/html")], file.data).into_response(),
+        Some(file) => ([
+            (header::CONTENT_TYPE, "text/html"),
+            (header::CACHE_CONTROL, "no-cache"),
+        ], file.data).into_response(),
         None => (StatusCode::NOT_FOUND, "index.html not found").into_response(),
     }
 }
