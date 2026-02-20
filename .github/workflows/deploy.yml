@@ -3,6 +3,9 @@ name: Deploy
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - backend/src/bin/memory-pfl-mcp.rs
+      - .github/workflows/release-mcp.yml
   workflow_dispatch:
 
 jobs:
