@@ -94,8 +94,8 @@ handleAction = case _ of
         let key = toCategory state.tab <> "|" <> fromMaybe "" state.filterTag <> "|" <> state.searchQuery
         case Object.lookup key state.memoriesCache of
           Just cached -> H.modify_ _ { memories = cached }
-          Nothing -> pure unit
-        H.modify_ _ { loading = true, searching = not (String.null state.searchQuery) }
+          Nothing -> H.modify_ _ { loading = true }
+        H.modify_ _ { searching = not (String.null state.searchQuery) }
         result <- listMemories { q: state.searchQuery, category: Just (toCategory state.tab), tag: state.filterTag, page: Nothing, limit: Nothing }
         H.modify_ _ { loading = false, searching = false }
         case result of

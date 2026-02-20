@@ -47,7 +47,7 @@ resultList state =
   content
     | state.loading && state.memories == [] =
         [ HH.div
-            [ HP.classes [ H.ClassName "flex justify-center mt-12 text-gray-400" ] ]
+            [ HP.classes [ H.ClassName "flex justify-center mt-12 text-blue-500" ] ]
             [ loaderIcon ]
         ]
     | state.memories == [] =
