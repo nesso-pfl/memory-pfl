@@ -90,12 +90,16 @@ impl MemoryRepository for PgMemoryRepository {
         let id = Uuid::new_v4();
         let now = Utc::now();
 
+        let mut seen = std::collections::HashSet::new();
+        let mut tags = input.tags.clone();
+        tags.retain(|t| seen.insert(t.clone()));
+
         sqlx::query(
             "INSERT INTO memories (id, content, tags, category, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)",
         )
         .bind(id)
         .bind(&input.content)
-        .bind(&input.tags)
+        .bind(&tags)
         .bind(input.category.as_str())
         .bind(now)
         .bind(now)
@@ -114,7 +118,7 @@ impl MemoryRepository for PgMemoryRepository {
         Ok(Memory {
             id: id.to_string(),
             content: input.content,
-            tags: input.tags,
+            tags,
             category: input.category,
             created_at: now,
             updated_at: now,
@@ -138,7 +142,9 @@ impl MemoryRepository for PgMemoryRepository {
         let uuid = Uuid::parse_str(id).map_err(|e| RepositoryError::Internal(e.into()))?;
 
         let content = input.content.unwrap_or(existing.content);
-        let tags = input.tags.unwrap_or(existing.tags);
+        let mut tags = input.tags.unwrap_or(existing.tags);
+        let mut seen = std::collections::HashSet::new();
+        tags.retain(|t| seen.insert(t.clone()));
         let category = input.category.unwrap_or(existing.category);
         let now = Utc::now();
 

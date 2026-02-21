@@ -8,7 +8,7 @@ import Capability.User (class MonadUser, getProfile, logout)
 import Component.Footer (footer)
 import Component.Header (header)
 import Component.Router.Types (Action(..), Query(..), State)
-import Data.Array (elem, filter, null) as Array
+import Data.Array (elem, filter, nub, null) as Array
 import Data.Either (Either(..))
 import Foreign.Object as Object
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -191,7 +191,7 @@ handleAction = case _ of
     state <- H.get
     H.modify_ _ { submitting = true, submitError = Nothing }
     let
-      tags = Array.filter (not <<< String.null) $ map String.trim $ String.split (Pattern ",") state.formTags
+      tags = Array.nub $ Array.filter (not <<< String.null) $ map String.trim $ String.split (Pattern ",") state.formTags
       category = toCategory state.formCategory
       body = { content: state.formContent, tags, category }
     result <- case state.editingId of
