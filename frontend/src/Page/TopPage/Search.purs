@@ -3,7 +3,7 @@ module Page.TopPage.Search where
 import Prelude
 
 import Component.Router.Types (Action(..), State)
-import Data.Array (filter, null) as Array
+import Data.Array (elem, filter, null) as Array
 import Data.String.CodeUnits (contains) as String
 import Data.String.Common (null, toLower) as String
 import Data.String.Pattern (Pattern(..))
@@ -43,25 +43,41 @@ tagSearch state =
     [ HP.ref (H.RefLabel "tagSearch")
     , HP.classes [ H.ClassName "px-5 pt-3 relative" ]
     ]
-    ( [ HH.input
-          [ HP.type_ HP.InputText
-          , HP.name "tag"
-          , HP.placeholder "タグで検索..."
-          , HP.value state.tagInput
-          , HE.onValueInput SetTagInput
-          , HE.onFocusIn \_ -> TagFocus
-          , HP.classes [ H.ClassName "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" ]
-          ]
+    ( [ HH.div
+          [ HP.classes [ H.ClassName "w-full border border-gray-200 rounded-xl px-2 py-1.5 flex flex-wrap items-center gap-1.5 focus-within:ring-2 focus-within:ring-blue-200 focus-within:border-blue-300" ] ]
+          ( map chip state.filterTags <>
+            [ HH.input
+                [ HP.type_ HP.InputText
+                , HP.name "tag"
+                , HP.placeholder (if Array.null state.filterTags then "タグで検索..." else "")
+                , HP.value state.tagInput
+                , HE.onValueInput SetTagInput
+                , HE.onFocusIn \_ -> TagFocus
+                , HP.classes [ H.ClassName "flex-1 min-w-[80px] text-sm py-1 px-1.5 outline-none" ]
+                ]
+            ]
+          )
       ] <> suggestions
     )
   where
+  chip t =
+    HH.span
+      [ HP.classes [ H.ClassName "inline-flex items-center gap-0.5 text-xs font-medium bg-blue-100 text-blue-700 pl-2.5 pr-1 py-1 rounded-full" ] ]
+      [ HH.text t
+      , HH.button
+          [ HE.onClick \_ -> RemoveTag t
+          , HP.classes [ H.ClassName "ml-0.5 w-4 h-4 flex items-center justify-center rounded-full hover:bg-blue-200 text-blue-500" ]
+          ]
+          [ HH.text "\x2715" ]
+      ]
+  available = Array.filter (\t -> not (Array.elem t state.filterTags)) state.allTags
   matched
-    | String.null state.tagInput = state.allTags
+    | String.null state.tagInput = available
     | otherwise =
         let
           input = String.toLower state.tagInput
         in
-          Array.filter (\t -> String.contains (Pattern input) (String.toLower t)) state.allTags
+          Array.filter (\t -> String.contains (Pattern input) (String.toLower t)) available
   suggestions
     | not state.tagFocused = []
     | Array.null matched = []

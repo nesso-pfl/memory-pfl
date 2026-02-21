@@ -1,7 +1,7 @@
 module Component.Router.Types where
 
-import Data.Maybe (Maybe)
 import Data.Memory (Memory)
+import Data.Maybe (Maybe)
 import Data.Route (Route)
 import Data.Tab (Tab)
 import Data.User (UserProfile)
@@ -18,7 +18,7 @@ type State =
   , tagsCache :: Object (Array String)
   , tagInput :: String
   , tagFocused :: Boolean
-  , filterTag :: Maybe String
+  , filterTags :: Array String
   , searchQuery :: String
   , loading :: Boolean
   , searching :: Boolean
@@ -44,6 +44,7 @@ data Action
   | TagFocus
   | DocumentClick Event
   | SelectTag String
+  | RemoveTag String
   | ClearTag
   | SetSearchQuery String
   | SubmitSearch

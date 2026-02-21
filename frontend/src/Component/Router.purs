@@ -8,7 +8,7 @@ import Capability.User (class MonadUser, getProfile, logout)
 import Component.Footer (footer)
 import Component.Header (header)
 import Component.Router.Types (Action(..), Query(..), State)
-import Data.Array (filter) as Array
+import Data.Array (elem, filter, null) as Array
 import Data.Either (Either(..))
 import Foreign.Object as Object
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -43,7 +43,7 @@ component = H.mkComponent
       , tagsCache: Object.empty
       , tagInput: ""
       , tagFocused: false
-      , filterTag: Nothing
+      , filterTags: []
       , searchQuery: ""
       , loading: true
       , searching: false
@@ -91,19 +91,23 @@ handleAction = case _ of
     case state.profile of
       Nothing -> pure unit
       Just _ -> do
-        let key = toCategory state.tab <> "|" <> fromMaybe "" state.filterTag <> "|" <> state.searchQuery
+        let
+          tagsStr = String.joinWith "," state.filterTags
+          key = toCategory state.tab <> "|" <> tagsStr <> "|" <> state.searchQuery
         case Object.lookup key state.memoriesCache of
           Just cached -> H.modify_ _ { memories = cached }
           Nothing -> H.modify_ _ { loading = true }
         H.modify_ _ { searching = not (String.null state.searchQuery) }
-        result <- listMemories { q: state.searchQuery, category: Just (toCategory state.tab), tag: state.filterTag, page: Nothing, limit: Nothing }
+        let tagsParam = if Array.null state.filterTags then Nothing else Just tagsStr
+        result <- listMemories { q: state.searchQuery, category: Just (toCategory state.tab), tags: tagsParam, page: Nothing, limit: Nothing }
         H.modify_ _ { loading = false, searching = false }
         case result of
           Right memories -> H.modify_ \s -> s { memories = memories, memoriesCache = Object.insert key memories s.memoriesCache }
           Left _ -> pure unit
   SetTab tab -> do
     state <- H.get
-    replaceRoute (Home { tab: Just (toCategory tab), tag: state.filterTag })
+    let tagsParam = if Array.null state.filterTags then Nothing else Just (String.joinWith "," state.filterTags)
+    replaceRoute (Home { tab: Just (toCategory tab), tags: tagsParam })
   SetTagInput v ->
     H.modify_ _ { tagInput = v }
   TagFocus ->
@@ -123,12 +127,19 @@ handleAction = case _ of
         unless inside $ H.modify_ _ { showUserMenu = false }
       _, _ -> H.modify_ _ { showUserMenu = false }
   SelectTag t -> do
+    state <- H.get
+    let newTags = if Array.elem t state.filterTags then state.filterTags else state.filterTags <> [t]
     H.modify_ _ { tagInput = "", tagFocused = false }
-    tab <- H.gets _.tab
-    replaceRoute (Home { tab: Just (toCategory tab), tag: Just t })
+    let tagsParam = if Array.null newTags then Nothing else Just (String.joinWith "," newTags)
+    replaceRoute (Home { tab: Just (toCategory state.tab), tags: tagsParam })
+  RemoveTag t -> do
+    state <- H.get
+    let newTags = Array.filter (_ /= t) state.filterTags
+    let tagsParam = if Array.null newTags then Nothing else Just (String.joinWith "," newTags)
+    replaceRoute (Home { tab: Just (toCategory state.tab), tags: tagsParam })
   ClearTag -> do
     tab <- H.gets _.tab
-    replaceRoute (Home { tab: Just (toCategory tab), tag: Nothing })
+    replaceRoute (Home { tab: Just (toCategory tab), tags: Nothing })
   SetSearchQuery v ->
     H.modify_ _ { searchQuery = v }
   SubmitSearch ->
@@ -204,17 +215,19 @@ handleAction = case _ of
 handleQuery :: forall slots o m a. MonadEffect m => MonadUser m => MonadMemory m => Navigate m => Query a -> H.HalogenM State Action slots o m (Maybe a)
 handleQuery (Navigate route a) = do
   let
-    { tab, filterTag } = case route of
+    { tab, filterTags } = case route of
       Home p ->
         { tab: fromMaybe Development (p.tab >>= fromCategory)
-        , filterTag: p.tag
+        , filterTags: case p.tags of
+            Just s -> Array.filter (not <<< String.null) $ String.split (Pattern ",") s
+            Nothing -> []
         }
-  H.modify_ _ { route = Just route, tab = tab, filterTag = filterTag, tagInput = "", searchQuery = "" }
+  H.modify_ _ { route = Just route, tab = tab, filterTags = filterTags, tagInput = "", searchQuery = "" }
   state <- H.get
   case state.profile of
     Nothing -> H.modify_ _ { loading = false }
     Just _ -> do
-      let mKey = toCategory tab <> "|" <> fromMaybe "" filterTag <> "|"
+      let mKey = toCategory tab <> "|" <> String.joinWith "," filterTags <> "|"
       let tKey = toCategory tab
       case Object.lookup mKey state.memoriesCache, Object.lookup tKey state.tagsCache of
         Just mCached, Just tCached -> H.modify_ _ { memories = mCached, allTags = tCached }

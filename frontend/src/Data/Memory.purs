@@ -27,7 +27,7 @@ type CreateMemory =
   { content :: String, tags :: Array String, category :: String }
 
 type ListParams =
-  { q :: String, category :: Maybe String, tag :: Maybe String, page :: Maybe Int, limit :: Maybe Int }
+  { q :: String, category :: Maybe String, tags :: Maybe String, page :: Maybe Int, limit :: Maybe Int }
 
 listMemories :: ListParams -> Aff (Either String (Array Memory))
 listMemories params = do
@@ -36,7 +36,7 @@ listMemories params = do
     pairs = catMaybes
       [ qPair
       , map (\c -> "category=" <> c) params.category
-      , map (\t -> "tags=" <> t) params.tag
+      , map (\t -> "tags=" <> t) params.tags
       , map (\p -> "page=" <> show p) params.page
       , map (\l -> "limit=" <> show l) params.limit
       ]

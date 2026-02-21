@@ -3,6 +3,7 @@ module Page.TopPage.MemoryCard where
 import Prelude
 
 import Component.Router.Types (Action(..))
+import Data.Array (elem) as Array
 import Data.Maybe (Maybe(..))
 import Data.Memory (Memory)
 import Halogen as H
@@ -11,8 +12,8 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Html.Icons (editIcon, trashIcon)
 
-memoryCard :: forall slots m. Maybe String -> Maybe String -> Memory -> H.ComponentHTML Action slots m
-memoryCard activeTag confirmingDelete mem =
+memoryCard :: forall slots m. Array String -> Maybe String -> Memory -> H.ComponentHTML Action slots m
+memoryCard activeTags confirmingDelete mem =
   HH.div
     [ HP.classes [ H.ClassName "relative border border-gray-300 rounded-xl p-3 flex flex-col gap-3 bg-white" ] ]
     ( [ HH.div
@@ -38,7 +39,7 @@ memoryCard activeTag confirmingDelete mem =
           ]
       , HH.div
           [ HP.classes [ H.ClassName "flex gap-1.5 flex-wrap" ] ]
-          (map (tagBadge activeTag) mem.tags)
+          (map (tagBadge activeTags) mem.tags)
       ] <> deleteConfirm
     )
   where
@@ -66,8 +67,8 @@ memoryCard activeTag confirmingDelete mem =
         ]
     | otherwise = []
 
-tagBadge :: forall slots m. Maybe String -> String -> H.ComponentHTML Action slots m
-tagBadge activeTag t =
+tagBadge :: forall slots m. Array String -> String -> H.ComponentHTML Action slots m
+tagBadge activeTags t =
   HH.button
     [ HE.onClick \_ -> SelectTag t
     , HP.classes [ H.ClassName classes ]
@@ -75,6 +76,6 @@ tagBadge activeTag t =
     [ HH.text t ]
   where
   classes
-    | activeTag == Just t = "text-xs font-medium bg-blue-500 text-white px-2.5 py-1 rounded-full"
+    | Array.elem t activeTags = "text-xs font-medium bg-blue-500 text-white px-2.5 py-1 rounded-full"
     | otherwise = "text-xs font-medium text-blue-500 border border-blue-200 bg-blue-50 px-2.5 py-1 rounded-full hover:bg-blue-100"
 
