@@ -130,7 +130,10 @@ async fn list_memories(
     };
 
     match state.repo.search(embedding, 20, params.category).await {
-        Ok(memories) => Json(memories).into_response(),
+        Ok(memories) => Json(serde_json::json!({
+            "memories": memories,
+            "total_pages": 1,
+        })).into_response(),
         Err(e) => {
             tracing::error!("search_memories error: {e}");
             StatusCode::INTERNAL_SERVER_ERROR.into_response()

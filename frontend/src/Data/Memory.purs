@@ -36,7 +36,7 @@ listMemories params = do
     pairs = catMaybes
       [ qPair
       , map (\c -> "category=" <> c) params.category
-      , map (\t -> "tag=" <> t) params.tag
+      , map (\t -> "tags=" <> t) params.tag
       , map (\p -> "page=" <> show p) params.page
       , map (\l -> "limit=" <> show l) params.limit
       ]
@@ -46,8 +46,9 @@ listMemories params = do
   response <- fetch ("/memories" <> qs) {}
   if response.status == 200 then do
     raw <- response.json
-    case decodeJson (unsafeCoerce raw) of
-      Right memories -> pure (Right memories)
+    let decoded = decodeJson (unsafeCoerce raw) :: Either _ { memories :: Array Memory }
+    case decoded of
+      Right resp -> pure (Right resp.memories)
       Left err -> pure (Left (show err))
   else
     pure (Left "メモリの取得に失敗しました")
