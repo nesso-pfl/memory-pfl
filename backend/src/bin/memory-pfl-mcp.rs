@@ -173,7 +173,7 @@ impl MemoryServer {
             .bearer_auth(token))
     }
 
-    #[tool(description = "List memories, optionally filtered by category and/or tag. Supports pagination.")]
+    #[tool(description = "List memories, optionally filtered by category and/or tags. Supports pagination. Returns { memories: [Memory], total_pages: int }. Memory = { id, content, tags, category, created_at, updated_at }.")]
     async fn list_memories(&self, Parameters(input): Parameters<ListMemoriesInput>) -> String {
         let mut req = match self.get("/memories").await {
             Ok(r) => r,
@@ -199,7 +199,7 @@ impl MemoryServer {
         }
     }
 
-    #[tool(description = "List all tags used across memories, optionally filtered by category")]
+    #[tool(description = "List all tags used across memories, optionally filtered by category. Returns string[].")]
     async fn list_tags(&self, Parameters(input): Parameters<ListTagsInput>) -> String {
         let mut req = match self.get("/memories/tags").await {
             Ok(r) => r,
@@ -214,7 +214,7 @@ impl MemoryServer {
         }
     }
 
-    #[tool(description = "Get a memory by ID")]
+    #[tool(description = "Get a memory by ID. Returns Memory = { id, content, tags, category, created_at, updated_at }.")]
     async fn get_memory(&self, Parameters(input): Parameters<GetMemoryInput>) -> String {
         let path = format!("/memories/{}", input.id);
         match self.get(&path).await {
@@ -226,7 +226,7 @@ impl MemoryServer {
         }
     }
 
-    #[tool(description = "Search memories semantically")]
+    #[tool(description = "Search memories semantically. Returns { memories: [Memory], total_pages: 1 }.")]
     async fn search_memories(
         &self,
         Parameters(input): Parameters<SearchMemoriesInput>,
@@ -245,7 +245,7 @@ impl MemoryServer {
         }
     }
 
-    #[tool(description = "Create a new memory")]
+    #[tool(description = "Create a new memory. Returns the created Memory.")]
     async fn create_memory(
         &self,
         Parameters(input): Parameters<CreateMemoryInput>,
@@ -260,7 +260,7 @@ impl MemoryServer {
         }
     }
 
-    #[tool(description = "Update an existing memory by ID")]
+    #[tool(description = "Update an existing memory by ID. Returns the updated Memory.")]
     async fn update_memory(
         &self,
         Parameters(input): Parameters<UpdateMemoryInput>,
@@ -280,7 +280,7 @@ impl MemoryServer {
         }
     }
 
-    #[tool(description = "Delete a memory by ID")]
+    #[tool(description = "Delete a memory by ID. Returns \"Deleted\" on success.")]
     async fn delete_memory(
         &self,
         Parameters(input): Parameters<DeleteMemoryInput>,
