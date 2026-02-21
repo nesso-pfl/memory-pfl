@@ -103,7 +103,10 @@ async fn list_memories(
     if params.q.is_empty() {
         let limit = params.limit.min(200);
         let offset = params.page.saturating_sub(1) * limit;
-        return match state.repo.list(params.category, params.tag, limit, offset).await {
+        let tags: Vec<String> = params.tags
+            .map(|s| s.split(',').map(|t| t.trim().to_string()).collect())
+            .unwrap_or_default();
+        return match state.repo.list(params.category, tags, limit, offset).await {
             Ok(memories) => Json(memories).into_response(),
             Err(e) => {
                 tracing::error!("list_memories error: {e}");
@@ -199,7 +202,7 @@ struct ListQuery {
     #[serde(default)]
     q: String,
     category: Option<Category>,
-    tag: Option<String>,
+    tags: Option<String>,
     #[serde(default = "default_limit")]
     limit: usize,
     #[serde(default = "default_page")]

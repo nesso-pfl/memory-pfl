@@ -182,7 +182,7 @@ impl MemoryRepository for PgMemoryRepository {
     async fn list(
         &self,
         category: Option<Category>,
-        tag: Option<String>,
+        tags: Vec<String>,
         limit: usize,
         offset: usize,
     ) -> Result<Vec<Memory>, RepositoryError> {
@@ -197,8 +197,8 @@ impl MemoryRepository for PgMemoryRepository {
             conditions.push(format!("category = ${param_idx}"));
             param_idx += 1;
         }
-        if tag.is_some() {
-            conditions.push(format!("${param_idx} = ANY(tags)"));
+        if !tags.is_empty() {
+            conditions.push(format!("tags @> ${param_idx}"));
             param_idx += 1;
         }
         if !conditions.is_empty() {
@@ -214,8 +214,8 @@ impl MemoryRepository for PgMemoryRepository {
         if let Some(ref cat) = category {
             query = query.bind(cat.as_str());
         }
-        if let Some(ref t) = tag {
-            query = query.bind(t.as_str());
+        if !tags.is_empty() {
+            query = query.bind(&tags);
         }
         query = query.bind(limit).bind(offset);
 

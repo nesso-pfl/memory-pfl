@@ -37,8 +37,8 @@ struct TokenResponse {
 struct ListMemoriesInput {
     #[schemars(description = "Filter by category: \"development\" or \"general\"")]
     category: Option<String>,
-    #[schemars(description = "Filter by tag")]
-    tag: Option<String>,
+    #[schemars(description = "Filter by tags (AND logic: returns memories containing ALL specified tags)")]
+    tags: Option<Vec<String>>,
     #[schemars(description = "Max results to return (default 100, max 200)")]
     limit: Option<u32>,
     #[schemars(description = "Page number for pagination (default 1)")]
@@ -182,8 +182,10 @@ impl MemoryServer {
         if let Some(c) = &input.category {
             req = req.query(&[("category", c.as_str())]);
         }
-        if let Some(t) = &input.tag {
-            req = req.query(&[("tag", t.as_str())]);
+        if let Some(tags) = &input.tags {
+            if !tags.is_empty() {
+                req = req.query(&[("tags", &tags.join(","))]);
+            }
         }
         if let Some(l) = input.limit {
             req = req.query(&[("limit", &l.to_string())]);
