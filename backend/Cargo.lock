@@ -102,11 +102,12 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
 name = "auth-pfl"
-version = "0.4.1"
-source = "git+ssh://git@github.com/nesso-pfl/auth-pfl?tag=v0.4.1#b5972160d4f64a9e52b2acfb8c331ff6954debcd"
+version = "0.4.2"
+source = "git+ssh://git@github.com/nesso-pfl/auth-pfl?tag=v0.4.2#c9065a1e24923507d08ff4970811922165d79dfa"
 dependencies = [
  "axum",
  "axum-extra",
+ "cookie",
  "deadpool-redis",
  "jsonwebtoken",
  "redis",
