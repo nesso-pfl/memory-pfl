@@ -3,7 +3,6 @@ module Page.TopPage where
 import Prelude
 
 import Component.Router.Types (Action(..), State)
-import Data.Array (null) as Array
 import Data.Maybe (Maybe(..), isJust)
 import Halogen as H
 import Halogen.HTML as HH
@@ -28,31 +27,8 @@ resultList :: forall slots m. State -> H.ComponentHTML Action slots m
 resultList state =
   HH.div
     [ HP.classes [ H.ClassName "flex-1 px-5 py-4 flex flex-col gap-3 bg-gray-50" ] ]
-    (filterBadge <> content)
+    content
   where
-  filterBadge
-    | Array.null state.filterTags = []
-    | otherwise =
-        [ HH.div
-            [ HP.classes [ H.ClassName "flex items-center gap-2 flex-wrap" ] ]
-            ( [ HH.span
-                  [ HP.classes [ H.ClassName "text-xs text-gray-400" ] ]
-                  [ HH.text "タグ:" ]
-              ] <> map tagChip state.filterTags <>
-              [ HH.button
-                  [ HE.onClick \_ -> ClearTag
-                  , HP.classes [ H.ClassName "text-xs text-gray-400 hover:text-gray-600" ]
-                  ]
-                  [ HH.text "全解除" ]
-              ]
-            )
-        ]
-  tagChip t =
-    HH.button
-      [ HE.onClick \_ -> RemoveTag t
-      , HP.classes [ H.ClassName "text-xs bg-gray-800 text-white pl-2.5 pr-2 py-1 rounded-full inline-flex items-center gap-1 hover:bg-gray-700" ]
-      ]
-      [ HH.text t, HH.text " \x2715" ]
   content
     | state.loading && state.memories == [] =
         [ HH.div
