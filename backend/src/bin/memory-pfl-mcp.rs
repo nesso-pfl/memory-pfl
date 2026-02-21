@@ -8,7 +8,8 @@ use rmcp::model::*;
 use rmcp::{ServerHandler, ServiceExt, tool, tool_handler, tool_router};
 use schemars::JsonSchema;
 use self_update::cargo_crate_version;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 const CLIENT_ID: &str = "memory-pfl-mcp";
 
@@ -52,6 +53,34 @@ struct SearchMemoriesInput {
     query: String,
     #[schemars(description = "Filter by category: \"development\" or \"general\"")]
     category: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, JsonSchema)]
+struct CreateMemoryInput {
+    #[schemars(description = "The content of the memory")]
+    content: String,
+    #[schemars(description = "Tags for categorization")]
+    tags: Vec<String>,
+    #[schemars(description = "Category: \"development\" or \"general\"")]
+    category: String,
+}
+
+#[derive(Deserialize, JsonSchema)]
+struct UpdateMemoryInput {
+    #[schemars(description = "The ID of the memory to update")]
+    id: String,
+    #[schemars(description = "New content (omit to keep unchanged)")]
+    content: Option<String>,
+    #[schemars(description = "New tags (omit to keep unchanged)")]
+    tags: Option<Vec<String>>,
+    #[schemars(description = "New category: \"development\" or \"general\" (omit to keep unchanged)")]
+    category: Option<String>,
+}
+
+#[derive(Deserialize, JsonSchema)]
+struct DeleteMemoryInput {
+    #[schemars(description = "The ID of the memory to delete")]
+    id: String,
 }
 
 #[tool_router]
@@ -110,6 +139,30 @@ impl MemoryServer {
             .bearer_auth(token))
     }
 
+    async fn post(&self, path: &str) -> Result<reqwest::RequestBuilder, String> {
+        let token = self.access_token().await?;
+        Ok(self
+            .client
+            .post(format!("{}{}", self.base_url, path))
+            .bearer_auth(token))
+    }
+
+    async fn put(&self, path: &str) -> Result<reqwest::RequestBuilder, String> {
+        let token = self.access_token().await?;
+        Ok(self
+            .client
+            .put(format!("{}{}", self.base_url, path))
+            .bearer_auth(token))
+    }
+
+    async fn delete(&self, path: &str) -> Result<reqwest::RequestBuilder, String> {
+        let token = self.access_token().await?;
+        Ok(self
+            .client
+            .delete(format!("{}{}", self.base_url, path))
+            .bearer_auth(token))
+    }
+
     #[tool(description = "List memories, optionally filtered by category and/or tag")]
     async fn list_memories(&self, Parameters(input): Parameters<ListMemoriesInput>) -> String {
         let mut req = match self.get("/memories").await {
@@ -158,6 +211,56 @@ impl MemoryServer {
             Err(e) => format!("Error: {e}"),
         }
     }
+
+    #[tool(description = "Create a new memory")]
+    async fn create_memory(
+        &self,
+        Parameters(input): Parameters<CreateMemoryInput>,
+    ) -> String {
+        let req = match self.post("/memories").await {
+            Ok(r) => r,
+            Err(e) => return format!("Error: {e}"),
+        };
+        match req.json(&input).send().await.and_then(|r| r.error_for_status()) {
+            Ok(resp) => resp.text().await.unwrap_or_default(),
+            Err(e) => format!("Error: {e}"),
+        }
+    }
+
+    #[tool(description = "Update an existing memory by ID")]
+    async fn update_memory(
+        &self,
+        Parameters(input): Parameters<UpdateMemoryInput>,
+    ) -> String {
+        let path = format!("/memories/{}", input.id);
+        let req = match self.put(&path).await {
+            Ok(r) => r,
+            Err(e) => return format!("Error: {e}"),
+        };
+        let mut body = json!({});
+        if let Some(c) = input.content { body["content"] = json!(c); }
+        if let Some(t) = input.tags { body["tags"] = json!(t); }
+        if let Some(c) = input.category { body["category"] = json!(c); }
+        match req.json(&body).send().await.and_then(|r| r.error_for_status()) {
+            Ok(resp) => resp.text().await.unwrap_or_default(),
+            Err(e) => format!("Error: {e}"),
+        }
+    }
+
+    #[tool(description = "Delete a memory by ID")]
+    async fn delete_memory(
+        &self,
+        Parameters(input): Parameters<DeleteMemoryInput>,
+    ) -> String {
+        let path = format!("/memories/{}", input.id);
+        match self.delete(&path).await {
+            Ok(req) => match req.send().await.and_then(|r| r.error_for_status()) {
+                Ok(_) => "Deleted".into(),
+                Err(e) => format!("Error: {e}"),
+            },
+            Err(e) => format!("Error: {e}"),
+        }
+    }
 }
 
 #[tool_handler]
@@ -172,9 +275,10 @@ impl ServerHandler for MemoryServer {
             },
             instructions: Some(format!(
                 "ユーザーの開発メモ・知見・意思決定の記録を保存したデータベース (v{})。\
-                 過去の設計判断、学んだこと、開発パターンなどを検索できる。\
+                 過去の設計判断、学んだこと、開発パターンなどを検索・作成・更新・削除できる。\
                  ユーザーが過去の経験や知見に関連する作業をしているとき、\
                  類似の問題を以前解決したか確認したいとき、\
+                 新しい知見を記録したいとき、\
                  または明示的にメモリを参照したいときに使用する。",
                 cargo_crate_version!()
             )),
@@ -184,6 +288,13 @@ impl ServerHandler for MemoryServer {
 }
 
 fn self_update() {
+    // Redirect stdout to /dev/null during self_update to avoid polluting MCP stdio
+    use std::fs::File;
+    use std::os::unix::io::AsRawFd;
+    let devnull = File::open("/dev/null").unwrap();
+    let saved_stdout = unsafe { libc::dup(1) };
+    unsafe { libc::dup2(devnull.as_raw_fd(), 1) };
+
     let result = self_update::backends::github::Update::configure()
         .repo_owner("nesso-pfl")
         .repo_name("memory-pfl")
@@ -192,6 +303,10 @@ fn self_update() {
         .no_confirm(true)
         .build()
         .and_then(|u| u.update());
+
+    // Restore stdout
+    unsafe { libc::dup2(saved_stdout, 1) };
+    unsafe { libc::close(saved_stdout) };
 
     match result {
         Ok(status) => {

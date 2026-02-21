@@ -207,6 +207,7 @@ dependencies = [
  "auth-pfl",
  "axum",
  "chrono",
+ "libc",
  "mime_guess",
  "pgvector",
  "reqwest 0.12.28",
