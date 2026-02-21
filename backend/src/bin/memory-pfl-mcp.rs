@@ -171,7 +171,11 @@ impl ServerHandler for MemoryServer {
                 ..Default::default()
             },
             instructions: Some(format!(
-                "Read-only access to memory-pfl data (v{})",
+                "ユーザーの開発メモ・知見・意思決定の記録を保存したデータベース (v{})。\
+                 過去の設計判断、学んだこと、開発パターンなどを検索できる。\
+                 ユーザーが過去の経験や知見に関連する作業をしているとき、\
+                 類似の問題を以前解決したか確認したいとき、\
+                 または明示的にメモリを参照したいときに使用する。",
                 cargo_crate_version!()
             )),
             ..Default::default()
