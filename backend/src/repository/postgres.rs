@@ -185,11 +185,11 @@ impl MemoryRepository for PgMemoryRepository {
         tags: Vec<String>,
         limit: usize,
         offset: usize,
-    ) -> Result<Vec<Memory>, RepositoryError> {
-        let limit = limit as i64;
+    ) -> Result<(Vec<Memory>, usize), RepositoryError> {
+        let limit_i64 = limit as i64;
         let offset = offset as i64;
 
-        let mut sql = String::from("SELECT * FROM memories");
+        let mut where_clause = String::new();
         let mut conditions = Vec::new();
         let mut param_idx = 1usize;
 
@@ -202,29 +202,42 @@ impl MemoryRepository for PgMemoryRepository {
             param_idx += 1;
         }
         if !conditions.is_empty() {
-            sql.push_str(" WHERE ");
-            sql.push_str(&conditions.join(" AND "));
+            where_clause = format!(" WHERE {}", conditions.join(" AND "));
         }
-        sql.push_str(&format!(
-            " ORDER BY created_at DESC LIMIT ${param_idx} OFFSET ${}",
-            param_idx + 1
-        ));
 
-        let mut query = sqlx::query_as::<_, MemoryRow>(&sql);
+        let count_sql = format!("SELECT COUNT(*) FROM memories{where_clause}");
+        let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
         if let Some(ref cat) = category {
-            query = query.bind(cat.as_str());
+            count_query = count_query.bind(cat.as_str());
         }
         if !tags.is_empty() {
-            query = query.bind(&tags);
+            count_query = count_query.bind(&tags);
         }
-        query = query.bind(limit).bind(offset);
+        let total: usize = count_query
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| RepositoryError::Internal(e.into()))? as usize;
 
-        let rows: Vec<MemoryRow> = query
+        let select_sql = format!(
+            "SELECT * FROM memories{where_clause} ORDER BY created_at DESC LIMIT ${param_idx} OFFSET ${}",
+            param_idx + 1
+        );
+        let mut select_query = sqlx::query_as::<_, MemoryRow>(&select_sql);
+        if let Some(ref cat) = category {
+            select_query = select_query.bind(cat.as_str());
+        }
+        if !tags.is_empty() {
+            select_query = select_query.bind(&tags);
+        }
+        select_query = select_query.bind(limit_i64).bind(offset);
+
+        let rows: Vec<MemoryRow> = select_query
             .fetch_all(&self.pool)
             .await
             .map_err(|e| RepositoryError::Internal(e.into()))?;
 
-        rows.into_iter().map(TryInto::try_into).collect()
+        let memories: Vec<Memory> = rows.into_iter().map(TryInto::try_into).collect::<Result<_, _>>()?;
+        Ok((memories, total))
     }
 
     async fn list_tags(&self, category: Option<Category>) -> Result<Vec<String>, RepositoryError> {

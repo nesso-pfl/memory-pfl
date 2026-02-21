@@ -107,7 +107,13 @@ async fn list_memories(
             .map(|s| s.split(',').map(|t| t.trim().to_string()).collect())
             .unwrap_or_default();
         return match state.repo.list(params.category, tags, limit, offset).await {
-            Ok(memories) => Json(memories).into_response(),
+            Ok((memories, total)) => {
+                let total_pages = total.div_ceil(limit);
+                Json(serde_json::json!({
+                    "memories": memories,
+                    "total_pages": total_pages,
+                })).into_response()
+            }
             Err(e) => {
                 tracing::error!("list_memories error: {e}");
                 StatusCode::INTERNAL_SERVER_ERROR.into_response()

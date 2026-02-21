@@ -29,7 +29,7 @@ pub trait MemoryRepository: Send + Sync {
 
     fn delete(&self, id: &str) -> impl Future<Output = Result<(), RepositoryError>> + Send;
 
-    fn list(&self, category: Option<Category>, tags: Vec<String>, limit: usize, offset: usize) -> impl Future<Output = Result<Vec<Memory>, RepositoryError>> + Send;
+    fn list(&self, category: Option<Category>, tags: Vec<String>, limit: usize, offset: usize) -> impl Future<Output = Result<(Vec<Memory>, usize), RepositoryError>> + Send;
 
     fn list_tags(&self, category: Option<Category>) -> impl Future<Output = Result<Vec<String>, RepositoryError>> + Send;
 
