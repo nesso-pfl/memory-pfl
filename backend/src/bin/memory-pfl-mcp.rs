@@ -39,6 +39,16 @@ struct ListMemoriesInput {
     category: Option<String>,
     #[schemars(description = "Filter by tag")]
     tag: Option<String>,
+    #[schemars(description = "Max results to return (default 100, max 200)")]
+    limit: Option<u32>,
+    #[schemars(description = "Page number for pagination (default 1)")]
+    page: Option<u32>,
+}
+
+#[derive(Deserialize, JsonSchema)]
+struct ListTagsInput {
+    #[schemars(description = "Filter tags by category: \"development\" or \"general\"")]
+    category: Option<String>,
 }
 
 #[derive(Deserialize, JsonSchema)]
@@ -163,7 +173,7 @@ impl MemoryServer {
             .bearer_auth(token))
     }
 
-    #[tool(description = "List memories, optionally filtered by category and/or tag")]
+    #[tool(description = "List memories, optionally filtered by category and/or tag. Supports pagination.")]
     async fn list_memories(&self, Parameters(input): Parameters<ListMemoriesInput>) -> String {
         let mut req = match self.get("/memories").await {
             Ok(r) => r,
@@ -174,6 +184,27 @@ impl MemoryServer {
         }
         if let Some(t) = &input.tag {
             req = req.query(&[("tag", t.as_str())]);
+        }
+        if let Some(l) = input.limit {
+            req = req.query(&[("limit", &l.to_string())]);
+        }
+        if let Some(p) = input.page {
+            req = req.query(&[("page", &p.to_string())]);
+        }
+        match req.send().await.and_then(|r| r.error_for_status()) {
+            Ok(resp) => resp.text().await.unwrap_or_default(),
+            Err(e) => format!("Error: {e}"),
+        }
+    }
+
+    #[tool(description = "List all tags used across memories, optionally filtered by category")]
+    async fn list_tags(&self, Parameters(input): Parameters<ListTagsInput>) -> String {
+        let mut req = match self.get("/memories/tags").await {
+            Ok(r) => r,
+            Err(e) => return format!("Error: {e}"),
+        };
+        if let Some(c) = &input.category {
+            req = req.query(&[("category", c.as_str())]);
         }
         match req.send().await.and_then(|r| r.error_for_status()) {
             Ok(resp) => resp.text().await.unwrap_or_default(),
