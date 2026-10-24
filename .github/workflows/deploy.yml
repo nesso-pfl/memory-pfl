@@ -35,4 +35,4 @@ jobs:
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
           docker save memory-pfl:latest | gzip | ssh -i ~/.ssh/id_ed25519 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "docker load && cd ${{ vars.DEPLOY_PATH }} && docker compose up -d memory-pfl"
+            "docker load && cd ${{ vars.DEPLOY_PATH }} && docker compose up -d memory-pfl && docker image prune -f"
